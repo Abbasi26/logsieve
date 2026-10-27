@@ -1,0 +1,2 @@
+Level,Date and Time,Source,Event ID,Task Category,Message,Computer,User
+Error,2026-10-21T08:03:05Z,Microsoft-Windows-WindowsUpdateClient,31,,"Windows Update failed 0x80072EE7 contacting wsus.northwind.example, retry later",laptop-07.northwind.example,ada.example@northwind.example

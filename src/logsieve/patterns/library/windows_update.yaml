@@ -1,0 +1,515 @@
+# Windows Update Agent codes.
+# Meanings are paraphrased from Microsoft's component list. The constant and
+# the hex value are the identifier; the source page is the authority.
+# https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+
+- id: wu-name-not-resolved
+  title: Windows Update cannot resolve the server name
+  constant: WU_E_PT_WINHTTP_NAME_NOT_RESOLVED
+  codes: ["0x8024402C"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: name-resolution
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_PT_WINHTTP_NAME_NOT_RESOLVED. Microsoft documents this as the same
+    condition as ERROR_WINHTTP_NAME_NOT_RESOLVED: the proxy name or the target
+    server name cannot be resolved. On a client that uses WSUS, that usually
+    means the WSUS hostname. On a client that goes direct, it points at local
+    DNS or the path to the Windows Update service.
+  fix_hints:
+    - From the client, resolve the Windows Update or WSUS hostname and confirm the answer is the server you expect.
+    - Check WinHTTP proxy configuration. A proxy hostname that does not resolve produces this code.
+    - Confirm the WUServer value, when policy sets one, is a name the client can resolve.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-client/installing-updates-features-roles/error-0x8024402c-installing-update-feature-on-demand
+  self_test: "Windows Update failed with error 0x8024402C"
+
+- id: wu-http-timeout
+  title: Windows Update HTTP request timed out
+  constant: WU_E_PT_HTTP_STATUS_REQUEST_TIMEOUT
+  codes: ["0x8024401C"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: timeout
+  symptom_of: ["network"]
+  area: windows-update
+  explanation: >
+    WU_E_PT_HTTP_STATUS_REQUEST_TIMEOUT. Microsoft maps this to HTTP 408:
+    the server timed out waiting for the request.
+  fix_hints:
+    - Check reachability and latency to the update endpoint, including any proxy hop.
+    - Look for a proxy or firewall that closes idle connections before the client finishes the request.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "scan failed 0x8024401C"
+
+- id: wu-proxy-auth
+  title: Windows Update proxy authentication required
+  constant: WU_E_PT_HTTP_STATUS_PROXY_AUTH_REQ
+  codes: ["0x8024401B"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: proxy
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_PT_HTTP_STATUS_PROXY_AUTH_REQ. Microsoft maps this to HTTP 407:
+    the proxy requires authentication.
+  fix_hints:
+    - Confirm the WinHTTP proxy and whether the machine account can authenticate to it.
+    - A user-level proxy that works in a browser can still fail for the Windows Update service.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "proxy returned 0x8024401B"
+
+- id: wu-http-forbidden
+  title: Windows Update server refused the request
+  constant: WU_E_PT_HTTP_STATUS_FORBIDDEN
+  codes: ["0x80244018"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: auth
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_PT_HTTP_STATUS_FORBIDDEN. Microsoft maps this to HTTP 403:
+    the server understood the request and declined it.
+  fix_hints:
+    - Check WSUS or upstream permissions and any device-based filter in front of the update service.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80244018"
+
+- id: wu-http-not-found
+  title: Windows Update URI was not found
+  constant: WU_E_PT_HTTP_STATUS_NOT_FOUND
+  codes: ["0x80244019"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: network
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_PT_HTTP_STATUS_NOT_FOUND. Microsoft maps this to HTTP 404:
+    the server cannot find the requested URI.
+  fix_hints:
+    - Compare the client's update URL with the service that is actually answering.
+    - A WSUS content path that was removed or a bad port produces a 404.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80244019"
+
+- id: wu-service-unavailable
+  title: Windows Update service temporarily unavailable
+  constant: WU_E_PT_HTTP_STATUS_SERVICE_UNAVAIL
+  codes: ["0x80244022"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: network
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_PT_HTTP_STATUS_SERVICE_UNAVAIL. Microsoft maps this to HTTP 503:
+    the service is temporarily overloaded.
+  fix_hints:
+    - Retry after the update server or WSUS application pool has recovered.
+    - If every client fails at once, look at the server rather than one device.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80244022"
+
+- id: wu-server-not-set
+  title: Windows Update intranet server policy is missing
+  constant: WU_E_PT_SUS_SERVER_NOT_SET
+  codes: ["0x80244011"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: policy
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_PT_SUS_SERVER_NOT_SET. Microsoft's description is that the WUServer
+    policy value is missing in the registry.
+  fix_hints:
+    - If the client is supposed to use an intranet update service, confirm the policy that sets WUServer is applied.
+    - If the client should use Windows Update directly, remove a partial intranet configuration.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "WU_E_PT_SUS_SERVER_NOT_SET 0x80244011"
+
+- id: wu-install-not-allowed
+  title: Windows Update install blocked by another install or a pending restart
+  constant: WU_E_INSTALL_NOT_ALLOWED
+  codes: ["0x80240016"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: reboot
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_INSTALL_NOT_ALLOWED. Microsoft's description is that an install was
+    attempted while another installation was in progress or the system was
+    pending a mandatory restart.
+  fix_hints:
+    - Restart the device if a servicing operation is pending, then retry.
+    - Do not stack a second installer on top of one that is still running.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80240016"
+
+- id: wu-not-applicable
+  title: Windows Update found nothing applicable
+  constant: WU_E_NOT_APPLICABLE
+  codes: ["0x80240017"]
+  severity: info
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_NOT_APPLICABLE. Microsoft's description is that the operation was not
+    performed because there are no applicable updates. This is often a result,
+    not a broken client.
+  fix_hints:
+    - Confirm the update was actually meant for this OS build and architecture.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "not applicable 0x80240017"
+
+- id: wu-no-connection
+  title: Windows Update had no network connection
+  constant: WU_E_NO_CONNECTION
+  codes: ["0x8024001F"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: network
+  symptom_of: ["name-resolution"]
+  area: windows-update
+  explanation: >
+    WU_E_NO_CONNECTION. Microsoft's description is that the operation did not
+    complete because the network connection was unavailable.
+  fix_hints:
+    - Confirm the client had a working network path at the time of the scan, not only a link light.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x8024001F"
+
+- id: wu-timeout
+  title: Windows Update operation timed out
+  constant: WU_E_TIME_OUT
+  codes: ["0x80240021"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: timeout
+  symptom_of: ["network"]
+  area: windows-update
+  explanation: >
+    WU_E_TIME_OUT. Microsoft's description is that the operation did not
+    complete because it timed out.
+  fix_hints:
+    - Check whether the update service or a large download is stalling, then look at network path and disk.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80240021"
+
+- id: wu-all-failed
+  title: Every update in the Windows Update operation failed
+  constant: WU_E_ALL_UPDATES_FAILED
+  codes: ["0x80240022"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: ["name-resolution", "network", "proxy", "disk", "service"]
+  area: windows-update
+  explanation: >
+    WU_E_ALL_UPDATES_FAILED. Microsoft's description is that the operation
+    failed for all the updates. The useful detail is usually an earlier code
+    in the same log.
+  fix_hints:
+    - Read the earlier error in the same scan. This code is the summary, not the cause.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80240022"
+
+- id: wu-disabled
+  title: Windows Update access to an unmanaged server is not allowed
+  constant: WU_E_WU_DISABLED
+  codes: ["0x8024002E"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: policy
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_WU_DISABLED. Microsoft's description is that access to an unmanaged
+    server is not allowed.
+  fix_hints:
+    - Check policy that disables Windows Update or forces an intranet service.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x8024002E"
+
+- id: wu-cancelled-by-policy
+  title: Windows Update blocked by DisableWindowsUpdateAccess
+  constant: WU_E_CALL_CANCELLED_BY_POLICY
+  codes: ["0x8024002F"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: policy
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_CALL_CANCELLED_BY_POLICY. Microsoft's description is that the
+    operation did not complete because the DisableWindowsUpdateAccess policy
+    was set.
+  fix_hints:
+    - Review the policy or configuration profile that disables Windows Update access.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x8024002F"
+
+- id: wu-invalid-proxy
+  title: Windows Update proxy list is invalid
+  constant: WU_E_INVALID_PROXY_SERVER
+  codes: ["0x80240030"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: proxy
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_INVALID_PROXY_SERVER. Microsoft's description is that the format of
+    the proxy list was invalid.
+  fix_hints:
+    - Inspect the WinHTTP proxy string for a malformed host, port, or bypass list.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80240030"
+
+- id: wu-download-failed
+  title: Windows Update download failed
+  constant: WU_E_DOWNLOAD_FAILED
+  codes: ["0x80240034"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network", "proxy"]
+  area: windows-update
+  explanation: >
+    WU_E_DOWNLOAD_FAILED. Microsoft's description is that the update failed
+    to download. Pair it with the earlier protocol or WinHTTP code.
+  fix_hints:
+    - Find the earlier name-resolution, proxy, or connection error in the same scan.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "download failed 0x80240034"
+
+- id: wu-bad-hash
+  title: Windows Update file digest was not recognised
+  constant: WU_E_DM_INCORRECTFILEHASH
+  codes: ["0x80246002"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: hash
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_DM_INCORRECTFILEHASH. Microsoft's description is that a download
+    manager operation could not be completed because the file digest was not
+    recognised.
+  fix_hints:
+    - Re-download the content. A proxy that caches or inspects the payload can corrupt it.
+    - On WSUS, check that the content on disk matches what the metadata describes.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80246002"
+
+- id: wu-dm-no-network
+  title: Windows Update download manager had no network
+  constant: WU_E_DM_NONETWORK
+  codes: ["0x80246005"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: network
+  symptom_of: ["name-resolution"]
+  area: windows-update
+  explanation: >
+    WU_E_DM_NONETWORK. Microsoft's description is that a download manager
+    operation could not be completed because the network connection was
+    unavailable.
+  fix_hints:
+    - Confirm the network was up for the whole download, not only at the start of the scan.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80246005"
+
+- id: wu-installer-hung
+  title: Windows Update installer exceeded its time limit
+  constant: WU_E_UH_INSTALLERHUNG
+  codes: ["0x80242007"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: timeout
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_UH_INSTALLERHUNG. Microsoft's description is that the installer
+    exceeded the time limit.
+  fix_hints:
+    - Look in CBS and the Windows Update operational log for the package that stalled.
+    - A full disk or a file lock can make the installer sit until the limit.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80242007"
+
+- id: wu-installer-failure
+  title: Windows Update installer failed
+  constant: WU_E_UH_INSTALLERFAILURE
+  codes: ["0x8024200B"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: ["disk", "reboot", "hash"]
+  area: windows-update
+  explanation: >
+    WU_E_UH_INSTALLERFAILURE. Microsoft's description is that the installer
+    failed to install or uninstall one or more updates.
+  fix_hints:
+    - Use the package-level code in CBS.log. This HRESULT is the handler reporting that failure.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x8024200B"
+
+- id: wu-post-reboot-pending
+  title: Windows Update post-reboot work is still running
+  constant: WU_E_UH_POSTREBOOTSTILLPENDING
+  codes: ["0x80242014"]
+  severity: warning
+  confidence: high
+  uncertain: false
+  category: reboot
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_E_UH_POSTREBOOTSTILLPENDING. Microsoft's description is that the
+    post-reboot operation for the update is still in progress.
+  fix_hints:
+    - Let the pending servicing operation finish before starting another install.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80242014"
+
+- id: wu-reboot-required
+  title: Windows Update completed and requires a restart
+  constant: WU_S_REBOOT_REQUIRED
+  codes: ["0x00240005"]
+  severity: warning
+  confidence: high
+  uncertain: false
+  category: reboot
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    WU_S_REBOOT_REQUIRED. This is a success code. Microsoft's description is
+    that the system must be restarted to complete installation of the update.
+  fix_hints:
+    - Restart the device. Further installs may be refused until that happens.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "reboot required 0x00240005"
+
+- id: wu-service-not-running
+  title: Windows Update service is not running
+  codes: ["0x80070422"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: service
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    Microsoft's Windows Update error list describes 0x80070422 as the Windows
+    Update service having stopped or not running. The same HRESULT is the
+    WIN32-facility form of system error 1058 (ERROR_SERVICE_DISABLED): the
+    service cannot be started because it is disabled or has no enabled devices.
+  fix_hints:
+    - Check the startup type and state of wuauserv, and of the services it depends on.
+    - A policy or configuration profile may be disabling the service on purpose.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+    - https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--1000-1299-
+  self_test: "service failed 0x80070422"
+
+- id: wu-file-locked
+  title: Windows Update could not replace a file that is in use
+  codes: ["0x80070020"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: windows-update
+  explanation: >
+    Microsoft lists 0x80070020 as InstallFileLocked: the installer could not
+    access the file because it is already in use. The same page notes that
+    this happens when antivirus, antimalware, or backup software is scanning
+    the file the installer wants to replace.
+  fix_hints:
+    - Retry after a restart so the lock is gone.
+    - Check which process holds the file if the failure repeats.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/deployment/update/windows-update-error-reference
+  self_test: "error 0x80070020"
+
+- id: wu-event-20
+  title: Windows Update Client event 20
+  severity: error
+  confidence: medium
+  uncertain: true
+  category: install
+  symptom_of: []
+  area: windows-update
+  event_ids:
+    - provider: Microsoft-Windows-WindowsUpdateClient
+      id: "20"
+  explanation: >
+    A published System log sample uses Event ID 20 from
+    Microsoft-Windows-WindowsUpdateClient with the message text
+    "Installation Failure: Windows failed to install the following update".
+    A Microsoft Q&A answer summarises ID 20 as installation failed. Event IDs
+    are only meaningful with the provider, and the error code inside the
+    message is the reliable part. This entry is marked uncertain because the
+    ID-to-meaning note is community documentation plus one published sample,
+    not an official event reference.
+  fix_hints:
+    - Read the error code in the same event and match that, rather than stopping at event 20.
+  sources:
+    - https://learn.microsoft.com/en-us/answers/questions/2757085/event-id-20
+  notes: >
+    Uncertain. Prefer the HRESULT in the event message.
+  self_test: "Installation Failure: Windows failed to install the following update"
+  self_test_provider: Microsoft-Windows-WindowsUpdateClient
+  self_test_event_id: "20"

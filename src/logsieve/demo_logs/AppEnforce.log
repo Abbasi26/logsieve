@@ -1,0 +1,2 @@
+<![LOG[Fictional ConfigMgr client. This device does not exist.]LOG]!><time="08:02:50.000+000" date="10-21-2026" component="AppEnforce" context="" type="1" thread="100" file="AppEnforce.log">
+<![LOG[Failed to access all the provided program locations 0x87D01107 for Fictional Inventory Agent]LOG]!><time="08:03:01.000+000" date="10-21-2026" component="AppEnforce" context="" type="3" thread="100" file="AppEnforce.log">
