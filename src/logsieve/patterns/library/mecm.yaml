@@ -1,0 +1,426 @@
+# Configuration Manager application installation codes.
+# Text follows the short messages in Microsoft's application installation
+# error reference. Fix hints are shortened from that article, not a copy of it.
+# https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+
+- id: mecm-not-detected-after-install
+  title: Application was not detected after installation completed
+  codes: ["0x87D00324"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: detection
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00324 is "The
+    application was not detected after installation completed". After the
+    install command returns, detection runs again. A wrong detection rule
+    produces this even when the program exited 0.
+  fix_hints:
+    - Read AppDiscovery.log and CIAgent.log for the detection result after the install.
+    - Run the detection method the way the client does, in the same context (often SYSTEM).
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "AppEnforce failed with 0x87D00324"
+
+- id: mecm-still-detected-after-uninstall
+  title: Application was still detected after uninstall completed
+  codes: ["0x87D00325"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: detection
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00325 is "Application
+    was still detected after uninstall completed". Detection still sees the
+    application, so the uninstall command did not remove whatever detection checks.
+  fix_hints:
+    - Compare the uninstall command in AppEnforce.log with a manual uninstall in the same context.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D00325"
+
+- id: mecm-requirement-or-detection-failed
+  title: Application requirement evaluation or detection failed
+  codes: ["0x87D00329"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: detection
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00329 is "Application
+    requirement evaluation or detection failed".
+  fix_hints:
+    - Read AppIntentEval.log for requirement rules, dependencies, and supersedence on this deployment type.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D00329"
+
+- id: mecm-script-timeout
+  title: The script execution has timed out
+  codes: ["0x87D00321"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: script
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00321 is "The script
+    execution has timed out".
+  fix_hints:
+    - Read AppEnforce.log for the script that hit the limit.
+    - Increase the maximum allowed runtime only after the script is shown to finish when given more time.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "script execution has timed out 0x87D00321"
+
+- id: mecm-script-not-signed
+  title: Script is not signed
+  codes: ["0x87D00327"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: policy
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00327 is "Script is
+    not signed". The article notes that the PowerShell execution policy
+    client setting defaults to AllSigned, so an unsigned script fails.
+  fix_hints:
+    - Sign the script, or change the client setting if unsigned scripts are what you intend to run.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D00327"
+
+- id: mecm-timeout
+  title: Configuration Manager operation timed out
+  codes: ["0x87D00213"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: timeout
+  symptom_of: ["network"]
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00213 is "Timeout
+    occurred". The article points at the maximum allowed runtime and at a
+    maintenance window that is shorter than that runtime.
+  fix_hints:
+    - Compare the maximum runtime with the maintenance window on the client.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D00213"
+
+- id: mecm-ci-download-timeout
+  title: CI documents download timed out
+  codes: ["0x87D0027C"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network"]
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D0027C is "CI documents
+    download timed out". The article says to follow that activity in
+    CIAgent.log, CIDownloader.log, and DataTransferService.log.
+  fix_hints:
+    - Check those three logs for the management point or distribution point the client was using.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D0027C"
+
+- id: mecm-content-not-found
+  title: Content not found
+  codes: ["0x87D00607"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network"]
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00607 is "Content not
+    found". The article says to verify the application content is on a
+    distribution point the client can reach.
+  fix_hints:
+    - Confirm the content is distributed and that the client's boundary group has a usable distribution point.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "Content not found 0x87D00607"
+
+- id: mecm-bad-command-line
+  title: Install command line could not be built
+  codes: ["0x87D01106"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D01106 is "Failed to
+    verify the executable file is valid or to construct the associated
+    command line".
+  fix_hints:
+    - Run the install command by hand in the same context the client uses.
+    - Use a full path to powershell.exe or any other interpreter. A bare name that is not on the SYSTEM path fails this way.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D01106"
+
+- id: mecm-locations-unreachable
+  title: Client could not access the content locations
+  codes: ["0x87D01107"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network"]
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D01107 is "Failed to
+    access all the provided program locations. This program may retry if the
+    maximum retry count has not been reached". The article says the client
+    received locations and could not reach them, and points at
+    LocationServices.log, ContentTransferManager.log, and DataTransferService.log.
+  fix_hints:
+    - In LocationServices.log, look at the distribution point list and whether those names resolve and answer.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "Failed to access all the provided program locations 0x87D01107"
+
+- id: mecm-cache-or-disk-full
+  title: Not enough space in the client cache or on the disk
+  codes: ["0x87D01201"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: disk
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D01201 is "The content
+    download cannot be performed because there is not enough available space
+    in cache or the disk is full".
+  fix_hints:
+    - Compare free space and the client cache size with the application size.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D01201"
+
+- id: mecm-cache-too-small
+  title: Client cache is smaller than the content
+  codes: ["0x87D01202"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: cache
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D01202 is "The content
+    download cannot be performed because the total size of the client cache
+    is smaller than the size of the requested content".
+  fix_hints:
+    - Raise the client cache size above the package size, or shrink the package.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D01202"
+
+- id: mecm-item-not-found
+  title: Configuration Manager item not found
+  codes: ["0x87D00215"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network"]
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00215 is "Item not
+    found". The article says to verify that the deployment exists, that the
+    client has the policy, and that the content is available to the client.
+  fix_hints:
+    - Refresh client policy and confirm the client lists the deployment before redistributing content.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D00215"
+
+- id: mecm-no-service-window
+  title: No maintenance window is available
+  codes: ["0x87D00667"]
+  severity: warning
+  confidence: high
+  uncertain: false
+  category: policy
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D00667 is "No current
+    or future service window exists to install software updates". The article
+    also tells you to check that the maintenance window is long enough for
+    the application's maximum runtime and that the client has the window policy.
+  fix_hints:
+    - Check the maintenance window length against the maximum runtime, and confirm the client received the window.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "error 0x87D00667"
+
+- id: mecm-unknown
+  title: Configuration Manager returned an unknown error
+  codes: ["0x87D103E8"]
+  severity: error
+  confidence: low
+  uncertain: true
+  category: generic
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Configuration Manager's published message for 0x87D103E8 is "Error
+    Unknown". It does not identify a cause.
+  fix_hints:
+    - Use the component log around this line. This code alone is not a diagnosis.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  notes: Uncertain as a diagnosis. The code is real and generic.
+  self_test: "error 0x87D103E8"
+
+- id: msi-user-cancelled
+  title: Windows Installer install was cancelled by the user
+  codes: ["1602", "0x80070642"]
+  severity: warning
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1602 as
+    "User cancel installation". 0x80070642 is the WIN32-facility HRESULT for
+    Win32 code 1602.
+  fix_hints:
+    - Ask whether someone cancelled it. A system-context install avoids a user prompt when that is appropriate.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "MSI exit code 1602"
+
+- id: msi-fatal
+  title: Windows Installer fatal error
+  codes: ["1603", "0x80070643"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1603 as
+    "Fatal error during installation". 0x80070643 is the WIN32-facility
+    HRESULT for Win32 code 1603. The article says an MSI log usually has
+    "Return value 3" near the real reason. 1603 is the wrapper.
+  fix_hints:
+    - Enable Windows Installer logging and find the Return value 3 entry. Do not stop at 1603.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "Fatal error during installation 1603"
+
+- id: msi-not-installed
+  title: Windows Installer action is only valid for an installed product
+  codes: ["1605"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1605 as
+    "This action is only valid for products that are currently installed".
+  fix_hints:
+    - Confirm the product is installed before a repair, patch, or uninstall.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "exit code 1605"
+
+- id: msi-another-install
+  title: Another Windows Installer operation is running
+  codes: ["1618", "0x80070652"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1618 as
+    "Another program is being installed". 0x80070652 is the WIN32-facility
+    HRESULT for Win32 code 1618.
+  fix_hints:
+    - Wait for the other install to finish. Killing msiexec mid-transaction can leave the product half installed.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "Another program is being installed 1618"
+
+- id: msi-wrong-processor
+  title: Installer package does not support this processor
+  codes: ["1633"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1633 as
+    "This installation package is not supported by this processor type".
+  fix_hints:
+    - Deploy the package that matches the device architecture.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "exit code 1633"
+
+- id: msi-another-version
+  title: Another version of this product is already installed
+  codes: ["1638"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1638 as
+    "Another version of this product is already installed. Installation of
+    this version cannot continue."
+  fix_hints:
+    - Remove or upgrade the installed version in a supported order. A second MSI of the same product code will keep failing.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "exit code 1638"
+
+- id: msi-patch-mismatch
+  title: Windows Installer upgrade patch does not match the installed product
+  codes: ["1642"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: msi
+  explanation: >
+    Configuration Manager's application error reference lists MSI 1642 as
+    the upgrade patch failing because the program to be upgraded is missing
+    or the patch targets a different version.
+  fix_hints:
+    - Confirm the installed product version is the one this patch applies to.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "exit code 1642"

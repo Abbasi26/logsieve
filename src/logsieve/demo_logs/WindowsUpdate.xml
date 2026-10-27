@@ -1,0 +1,13 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-WindowsUpdateClient" />
+    <EventID>31</EventID>
+    <Level>2</Level>
+    <TimeCreated SystemTime="2026-10-21T08:02:40.0000000Z" />
+    <Computer>laptop-07.northwind.example</Computer>
+    <Security UserID="S-1-5-21-1000000001-1000000002-1000000003-1001" />
+  </System>
+  <RenderingInfo>
+    <Message>Windows Update scan failed 0x8024401C while contacting wsus.northwind.example.</Message>
+  </RenderingInfo>
+</Event>

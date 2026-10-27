@@ -1,0 +1,1 @@
+{"MESSAGE": "lookup wsus.northwind.example: no such host", "PRIORITY": "3", "__REALTIME_TIMESTAMP": "1792569700000000", "_HOSTNAME": "laptop-07.northwind.example", "SYSLOG_IDENTIFIER": "systemd-resolved"}

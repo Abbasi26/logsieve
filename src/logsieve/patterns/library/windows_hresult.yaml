@@ -1,0 +1,325 @@
+# WIN32-facility HRESULTs and a few servicing codes.
+# 0x8007xxxx = 0x80070000 + the Win32 system error. Microsoft documents that
+# facility in MS-ERREF. Where a Windows Update article states the HRESULT
+# itself, that article is listed too.
+
+- id: win-file-not-found
+  title: The system cannot find the file specified
+  constant: ERROR_FILE_NOT_FOUND
+  codes: ["0x80070002"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network"]
+  area: windows
+  explanation: >
+    0x80070002 is ERROR_FILE_NOT_FOUND (Win32 code 2). Microsoft's Windows
+    Update corruption article states that description for this HRESULT.
+    In an update or app log it often means a payload, source, or path the
+    installer expected is missing. It does not by itself say why.
+  fix_hints:
+    - Identify the path in the surrounding lines. The code only says that path was missing.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+    - https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+  self_test: "error 0x80070002"
+
+- id: win-path-not-found
+  title: The system cannot find the path specified
+  constant: ERROR_PATH_NOT_FOUND
+  codes: ["0x80070003"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: []
+  area: windows
+  explanation: >
+    0x80070003 is the WIN32-facility HRESULT for system error 3,
+    ERROR_PATH_NOT_FOUND. The directory portion of a path does not exist.
+  fix_hints:
+    - Check the parent directory in the same log line, not only the file name.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+    - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/0642cb2f-2075-4469-918c-4441e69c548a
+  self_test: "error 0x80070003"
+
+- id: win-access-denied
+  title: Access is denied
+  constant: ERROR_ACCESS_DENIED
+  codes: ["0x80070005"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: auth
+  symptom_of: []
+  area: windows
+  explanation: >
+    0x80070005 is the WIN32-facility HRESULT for system error 5,
+    ERROR_ACCESS_DENIED. Something the installer or service touched rejected
+    the account it was running as.
+  fix_hints:
+    - Note which account ran the action. A user-context install and a SYSTEM-context install fail this code for different reasons.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+    - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/0642cb2f-2075-4469-918c-4441e69c548a
+  self_test: "error 0x80070005"
+
+- id: win-disk-full
+  title: There is not enough space on the disk
+  constant: ERROR_DISK_FULL
+  codes: ["0x80070070"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: disk
+  symptom_of: []
+  area: windows
+  explanation: >
+    0x80070070 is the WIN32-facility HRESULT for system error 112,
+    ERROR_DISK_FULL.
+  fix_hints:
+    - Free space on the volume named in the log. Include the cache volume, not only the system drive, when the line mentions one.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+  self_test: "error 0x80070070"
+
+- id: win-cancelled
+  title: The operation was cancelled
+  constant: ERROR_CANCELLED
+  codes: ["0x800704C7"]
+  severity: warning
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: windows
+  explanation: >
+    0x800704C7 is the WIN32-facility HRESULT for system error 1223,
+    ERROR_CANCELLED. The operation was cancelled, often by the user or by a
+    caller that closed the request.
+  fix_hints:
+    - Check whether a person cancelled the install or a management tool aborted it.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--1000-1299-
+  self_test: "error 0x800704C7"
+
+- id: win-invalid-data
+  title: The data is invalid
+  constant: ERROR_INVALID_DATA
+  codes: ["0x8007000D"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: []
+  area: windows
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x8007000D as
+    ERROR_INVALID_DATA: the data is invalid.
+  fix_hints:
+    - Treat the payload as corrupt until a fresh copy succeeds. Check proxy inspection.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x8007000D"
+
+- id: win-invalid-parameter
+  title: The parameter is incorrect
+  constant: ERROR_INVALID_PARAMETER
+  codes: ["0x80070057"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: windows
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x80070057 as
+    ERROR_INVALID_PARAMETER: the parameter is incorrect.
+  fix_hints:
+    - Check the command line and any path that was passed into the installer.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x80070057"
+
+- id: cbs-store-corrupt
+  title: Component store is corrupt
+  constant: CBS_E_STORE_CORRUPTION
+  codes: ["0x800f0831"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: []
+  area: servicing
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x800f0831 as
+    CBS_E_STORE_CORRUPTION: the CBS store is corrupted.
+  fix_hints:
+    - Repair the component store before retrying the same update. The article that defines the code describes the servicing-store repair path.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x800f0831"
+
+- id: cbs-source-missing
+  title: Servicing source is missing
+  constant: CBS_E_SOURCE_MISSING
+  codes: ["0x800F081F"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["name-resolution", "network"]
+  area: servicing
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x800F081F as
+    CBS_E_SOURCE_MISSING: the source for the package or file was not found.
+  fix_hints:
+    - Provide the matching Windows source (install media or a repaired component store) and retry.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x800F081F"
+
+- id: sxs-store-corrupt
+  title: The component store is in an inconsistent state
+  constant: ERROR_SXS_COMPONENT_STORE_CORRUPT
+  codes: ["0x80073712"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: []
+  area: servicing
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x80073712 as
+    ERROR_SXS_COMPONENT_STORE_CORRUPT: the component store is in an
+    inconsistent state.
+  fix_hints:
+    - Repair the component store. Installing more packages on top of this code usually repeats the failure.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x80073712"
+
+- id: sxs-hash-mismatch
+  title: A component file does not match its manifest
+  constant: ERROR_SXS_FILE_HASH_MISMATCH
+  codes: ["0x800736CC"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: hash
+  symptom_of: []
+  area: servicing
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x800736CC as
+    ERROR_SXS_FILE_HASH_MISMATCH: a component file does not match the
+    verification information in the component manifest.
+  fix_hints:
+    - Obtain a clean copy of the package. A modified or half-written file will keep failing the hash.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x800736CC"
+
+- id: cert-expired
+  title: A required certificate is outside its validity period
+  constant: CERT_E_EXPIRED
+  codes: ["0x800B0101"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: auth
+  symptom_of: []
+  area: windows
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x800B0101 as
+    CERT_E_EXPIRED: a required certificate is not within its validity period
+    when checked against the current system clock or the timestamp in the
+    signed file.
+  fix_hints:
+    - Check the device clock first. Then check the certificate named in the same log.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x800B0101"
+
+- id: trust-no-signature
+  title: No signature was present
+  constant: TRUST_E_NOSIGNATURE
+  codes: ["0x800B0100"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: auth
+  symptom_of: []
+  area: windows
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x800B0100 as
+    TRUST_E_NOSIGNATURE: no signature was present in the subject.
+  fix_hints:
+    - Confirm the file that was checked is the signed package, not a renamed or truncated copy.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x800B0100"
+
+- id: crypt-file-error
+  title: Windows Update could not read or write a file
+  constant: CRYPT_E_FILE_ERROR
+  codes: ["0x80092003"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: content
+  symptom_of: ["disk"]
+  area: windows
+  explanation: >
+    Microsoft's Windows Update corruption article lists 0x80092003 as
+    CRYPT_E_FILE_ERROR: an error occurred while Windows Update reads or
+    writes to a file.
+  fix_hints:
+    - Check disk space and whether another process locked the file named nearby in the log.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/windows-server/installing-updates-features-roles/fix-windows-update-errors
+  self_test: "error 0x80092003"
+
+- id: hash-value-incorrect
+  title: The hash value is not correct
+  codes: ["0x80091007"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: hash
+  symptom_of: []
+  area: mecm
+  explanation: >
+    Microsoft's Configuration Manager application error reference lists
+    0x80091007 as "The hash value is not correct". The same article says the
+    hash of a file is not correct, that this is typically seen in CAS.log,
+    and that a sharing violation during the hash check (for example security
+    software scanning the file) can cause it because Configuration Manager
+    expects exclusive access while it hashes.
+  fix_hints:
+    - Compare the content hash with the package on the distribution point. Rebuild and redistribute if the content changed.
+    - If CAS.log shows a sharing violation on the same file, find the process that has it open.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  self_test: "The hash value is not correct 0x80091007"
+
+- id: win-unspecified
+  title: Unspecified error
+  codes: ["0x80004005"]
+  severity: error
+  confidence: low
+  uncertain: true
+  category: generic
+  symptom_of: []
+  area: windows
+  explanation: >
+    Microsoft's Configuration Manager application error reference lists
+    0x80004005 as "Unspecified error". It does not identify a cause. The
+    lines immediately before it matter more than the code.
+  fix_hints:
+    - Do not treat this code as a root cause. Read the previous error in the same component.
+  sources:
+    - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
+  notes: Uncertain as a diagnosis. The code is real and generic.
+  self_test: "failed 0x80004005"

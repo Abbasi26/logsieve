@@ -1,0 +1,142 @@
+# Intune app installation codes from Microsoft's app error reference.
+# 0x87D1041C is listed more than once on that page, with different wording
+# for Android, iOS, and the "Other" (Windows) row. That row is the one that
+# applies to Win32 / IME logs. The entry is marked uncertain because the hex
+# value alone does not say which of Microsoft's descriptions applies.
+# https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+
+- id: intune-not-detected
+  title: Intune reports the app was not detected after installation
+  codes: ["0x87D1041C"]
+  severity: error
+  confidence: medium
+  uncertain: true
+  category: detection
+  symptom_of: []
+  area: intune
+  explanation: >
+    Microsoft's Intune app-install reference uses 0x87D1041C in three places.
+    The Android row says the user uninstalled a required app. The iOS row
+    says detection did not match the device response. The "Other" row, which
+    is the one that applies to Windows app installs reported by the Intune
+    Management Extension, says installation succeeded but the application is
+    not detected, and lists three reasons: the user uninstalled it, the
+    package identity does not match what the device reports, or a
+    self-updating MSI changed its product version outside Intune. The
+    published decimal is -2016345060. Community write-ups often shorten this
+    to "the detection rule is wrong". That can be true for a Win32 app, and
+    it is not the only meaning Microsoft printed. logsieve will not pick
+    this code as a proven root cause.
+  fix_hints:
+    - For a Win32 app, compare the detection rule with what is actually on disk or in the registry after a manual install in the same context.
+    - Check whether the app updates itself and changes the version or product code Intune is looking for.
+    - Required apps are reinstalled on the next check-in if the user removed them. Confirm that is what happened before changing the rule.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+  notes: >
+    Uncertain which of Microsoft's three published descriptions applies until
+    you know the platform. For IME and Win32 logs, use the "Other installation
+    errors" row.
+  self_test: "Win32 app failed 0x87D1041C"
+
+- id: intune-sideloading
+  title: The device is not allowed to sideload the app package
+  codes: ["0x80073CFF"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: policy
+  symptom_of: []
+  area: intune
+  explanation: >
+    Microsoft's Intune app error reference says 0x80073CFF means the app
+    requires a sideloading-enabled system: the package must be signed with a
+    trusted signature and installed on a device where AllowAllTrustedApps is
+    enabled (domain joined, or a device with a sideloading license).
+  fix_hints:
+    - Confirm the package signature and the AllowAllTrustedApps policy on that device.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+  self_test: "error 0x80073CFF"
+
+- id: intune-package-unsigned
+  title: The app package is unsigned or the publisher does not match
+  codes: ["0x80073CF0"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: auth
+  symptom_of: []
+  area: intune
+  explanation: >
+    Microsoft's Intune app error reference says 0x80073CF0 means the package
+    could not be opened: it is unsigned, or the publisher name does not match
+    the signing certificate subject. The article points at the AppxPackagingOM
+    event log.
+  fix_hints:
+    - Re-sign the package and confirm the publisher subject matches the package identity.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+  self_test: "error 0x80073CF0"
+
+- id: intune-package-conflict
+  title: The app package failed update, dependency, or conflict validation
+  codes: ["0x80073CF3"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: intune
+  explanation: >
+    Microsoft's Intune app error reference says 0x80073CF3 means the package
+    failed update, dependency, or conflict validation: it conflicts with an
+    installed package, a dependency is missing, or the processor architecture
+    is wrong. The article points at the AppXDeployment-Server event log.
+  fix_hints:
+    - Read AppXDeployment-Server for the conflicting package or the missing dependency.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+  self_test: "error 0x80073CF3"
+
+- id: intune-package-not-identical
+  title: Reinstall blocked because the package is not identical to the installed one
+  codes: ["0x80073CFB"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: install
+  symptom_of: []
+  area: intune
+  explanation: >
+    Microsoft's Intune app error reference says 0x80073CFB means the package
+    is already installed and reinstallation is blocked because the new
+    package is not identical. Rebuilding or re-signing makes it no longer
+    bitwise identical. The article's options are to raise the version and
+    re-sign, or to remove the old package for every user before installing.
+  fix_hints:
+    - Increment the package version and re-sign, or remove the installed package for every user first.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+  self_test: "error 0x80073CFB"
+
+- id: intune-unexpected
+  title: Intune reported an unexpected installation error
+  codes: ["0x8000FFFF"]
+  severity: error
+  confidence: low
+  uncertain: true
+  category: generic
+  symptom_of: []
+  area: intune
+  explanation: >
+    Microsoft's Intune app error reference lists 0x8000FFFF in the "Other"
+    section as an unexpected error during installation and says to check the
+    installation logs. The same hex is a generic HRESULT (E_UNEXPECTED). It
+    is not a specific Intune failure.
+  fix_hints:
+    - Use the IME log lines around this code. The hex alone does not say what failed.
+  sources:
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/intune/app-management/app-install-error-codes
+  notes: Uncertain as a diagnosis. The code is real and generic.
+  self_test: "unexpected error 0x8000FFFF"

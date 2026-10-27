@@ -1,0 +1,119 @@
+# WinHTTP codes. The decimal values are from winhttp.h as published by
+# Microsoft. The 0x8007xxxx form is the WIN32-facility HRESULT (0x80070000
+# plus the Win32 code). Microsoft's Configuration Manager article walks
+# through that exact construction for 0x80072EE7 / 12007 / -2147012889.
+# https://learn.microsoft.com/en-us/windows/win32/winhttp/error-messages
+# https://learn.microsoft.com/en-us/troubleshoot/mem/configmgr/alerts-reports-queries/obtain-error-code-descriptions
+
+- id: winhttp-name-not-resolved
+  title: WinHTTP cannot resolve the server name
+  constant: ERROR_WINHTTP_NAME_NOT_RESOLVED
+  codes: ["0x80072EE7"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: name-resolution
+  symptom_of: []
+  area: winhttp
+  explanation: >
+    ERROR_WINHTTP_NAME_NOT_RESOLVED is Win32 code 12007: the server name
+    cannot be resolved. Microsoft's Configuration Manager error-code article
+    uses -2147012889 as the worked example and shows that it is 0x80072EE7,
+    which is 12007. logsieve also matches that signed decimal.
+  fix_hints:
+    - Resolve the hostname from the client that logged the error.
+    - Check DNS, the hosts file, and any proxy name in the WinHTTP settings.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/winhttp/error-messages
+    - https://learn.microsoft.com/en-us/troubleshoot/mem/configmgr/alerts-reports-queries/obtain-error-code-descriptions
+  self_test: "WinHTTP 0x80072EE7 name not resolved"
+
+- id: winhttp-timeout
+  title: WinHTTP request timed out
+  constant: ERROR_WINHTTP_TIMEOUT
+  codes: ["0x80072EE2"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: timeout
+  symptom_of: ["network"]
+  area: winhttp
+  explanation: >
+    ERROR_WINHTTP_TIMEOUT is Win32 code 12002. Microsoft's description is
+    that the request has timed out, and that this can come from TCP/IP
+    timeout behaviour regardless of the timeout values set in WinHTTP.
+    0x80072EE2 is the WIN32-facility HRESULT for 12002.
+  fix_hints:
+    - Check the path to the server, including proxy and firewall idle timeouts.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/winhttp/error-messages
+    - https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/0642cb2f-2075-4469-918c-4441e69c548a
+  self_test: "error 0x80072EE2"
+
+- id: winhttp-cannot-connect
+  title: WinHTTP could not connect to the server
+  constant: ERROR_WINHTTP_CANNOT_CONNECT
+  codes: ["0x80072EFD"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: network
+  symptom_of: ["name-resolution"]
+  area: winhttp
+  explanation: >
+    ERROR_WINHTTP_CANNOT_CONNECT is Win32 code 12029. Microsoft's description
+    is that the connection to the server failed. 0x80072EFD is the
+    WIN32-facility HRESULT for 12029.
+  fix_hints:
+    - Confirm the port is open from the client to the server named in the log.
+    - Name resolution can succeed and the TCP connection can still fail.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/winhttp/error-messages
+  self_test: "error 0x80072EFD"
+
+- id: winhttp-connection-error
+  title: WinHTTP connection was reset
+  constant: ERROR_WINHTTP_CONNECTION_ERROR
+  codes: ["0x80072EFE"]
+  severity: error
+  confidence: high
+  uncertain: false
+  category: network
+  symptom_of: ["name-resolution"]
+  area: winhttp
+  explanation: >
+    ERROR_WINHTTP_CONNECTION_ERROR is Win32 code 12030. Microsoft's
+    description is that the connection was reset or terminated, or that an
+    incompatible SSL protocol was encountered. 0x80072EFE is the
+    WIN32-facility HRESULT for 12030.
+  fix_hints:
+    - Check TLS inspection and whether the proxy resets the connection.
+    - Capture the server name from the same log line before changing policy.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/winhttp/error-messages
+  self_test: "error 0x80072EFE"
+
+- id: dns-phrase
+  title: Name lookup failed
+  severity: error
+  confidence: medium
+  uncertain: false
+  category: name-resolution
+  symptom_of: []
+  area: dns
+  signatures:
+    - '(?i)\b(no such host|name or service not known|name not resolved)\b'
+  explanation: >
+    The line says the resolver could not turn a name into an address.
+    "No such host" and "name or service not known" are the usual resolver
+    phrases. The code is medium confidence because the words are generic;
+    the hostname on the same line is what matters.
+  fix_hints:
+    - Resolve that hostname from the same machine and check which DNS server answered.
+  sources:
+    - https://learn.microsoft.com/en-us/windows/win32/winhttp/error-messages
+  notes: >
+    The WinHTTP page is the Windows wording ("the server name cannot be
+    resolved"). The glibc-style phrases are matched as the same class of
+    failure and are not given a fake Windows HRESULT.
+  self_test: "lookup files.example: no such host"

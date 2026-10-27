@@ -1,0 +1,2 @@
+<![LOG[The hash value is not correct 0x80091007 for C:\Users\ada.example\AppData\Local\Temp\FictionalInventory.cab from mp01.northwind.example]LOG]!><time="08:03:20.000+000" date="10-21-2026" component="ContentAccess" context="NORTHWIND\ada.example" type="3" thread="220" file="CAS.log">
+<![LOG[Content not found 0x87D00607 on 203.0.113.10]LOG]!><time="08:03:40.000+000" date="10-21-2026" component="ContentAccess" context="" type="3" thread="220" file="CAS.log">
