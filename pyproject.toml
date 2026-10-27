@@ -31,4 +31,5 @@ logsieve = ["patterns/library/*.yaml", "demo_logs/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-q"
