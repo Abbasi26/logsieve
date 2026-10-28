@@ -38,12 +38,12 @@ def parse_cm_timestamp(time_s: str, date_s: str) -> datetime | None:
     fraction = time_match.group(4) or "0"
     micro = int((fraction + "000000")[:6])
     offset = time_match.group(5)
-    tz = timezone.utc
-    if offset is not None:
-        tz = timezone(timedelta(minutes=int(offset)))
     try:
+        tz = timezone.utc
+        if offset is not None:
+            tz = timezone(timedelta(minutes=int(offset)))
         return datetime(year, month, day, hour, minute, second, micro, tzinfo=tz)
-    except ValueError:
+    except (OverflowError, ValueError):
         return None
 
 
