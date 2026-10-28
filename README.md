@@ -1,5 +1,7 @@
 # logsieve
 
+[![CI](https://github.com/Abbasi26/logsieve/actions/workflows/test.yml/badge.svg)](https://github.com/Abbasi26/logsieve/actions/workflows/test.yml)
+
 Local diagnosis for ConfigMgr, Intune, and Windows event logs, with the identifiers removed before anything leaves the machine.
 
 A client cannot install an update, and the useful lines are spread across `WUAHandler.log`, `AppEnforce.log`, `IntuneManagementExtension.log`, and a Windows Update event. Those lines also name the laptop, the user, and the WSUS server. logsieve puts the lines on one timeline, matches the codes it knows, and writes a report in which `laptop-07.northwind.example` has become `LS_HOST_2`. The mapping stays in an encrypted file on this computer. `logsieve reveal` puts a name back when you want to read an answer. A model is optional and off unless you ask.
@@ -121,6 +123,16 @@ Not in this version, and not claimed:
 [HolmesGPT](https://github.com/HolmesGPT/holmesgpt) is a cloud-native troubleshooting agent with an Ollama provider. It does not target Windows or ConfigMgr client logs, and reversible pseudonymization is not part of the product.
 
 [CMTrace Open](https://github.com/adamgell/cmtraceopen) displays ConfigMgr, IME, and Autopilot logs and can highlight known lines. It is a viewer. logsieve does not replace it. This project adds a single timeline across those logs and the Windows event log, reversible tokens, and an optional explanation of the redacted text.
+
+## Status
+
+Version 0.1.0, early but usable. Python package `logsieve`. MIT licensed. Every push runs the test suite in GitHub Actions (`.github/workflows/test.yml`).
+
+## Install
+
+```sh
+pip install .
+```
 
 ## License
 
