@@ -38,7 +38,9 @@ def looks_like_journald(text: str) -> bool:
 
 
 def _timestamp(obj: dict) -> datetime | None:
-    raw = obj.get("__REALTIME_TIMESTAMP") or obj.get("_SOURCE_REALTIME_TIMESTAMP")
+    raw = obj.get("__REALTIME_TIMESTAMP")
+    if raw in (None, ""):
+        raw = obj.get("_SOURCE_REALTIME_TIMESTAMP")
     if raw not in (None, ""):
         try:
             seconds = int(str(raw)) / 1_000_000

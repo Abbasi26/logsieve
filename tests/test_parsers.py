@@ -174,3 +174,43 @@ def test_synthetic_evtx_roundtrip(tmp_path: Path):
     assert parsed.events[0].event_id == "20"
     assert "0x8024402C" in parsed.events[0].message
     assert parsed.events[0].host == "laptop-07.northwind.example"
+
+
+import json
+
+import pytest
+
+
+@pytest.mark.parametrize("parser", ["auto", "journald"])
+def test_journald_zero_timestamp_and_fallbacks(tmp_path: Path, parser: str):
+    path = tmp_path / "collector.jsonl"
+    primary_fields = [
+        {"__REALTIME_TIMESTAMP": 0},
+        {"__REALTIME_TIMESTAMP": "0"},
+        {},
+        {"__REALTIME_TIMESTAMP": None},
+        {"__REALTIME_TIMESTAMP": ""},
+        {"__REALTIME_TIMESTAMP": "invalid"},
+    ]
+    path.write_text(
+        "\n".join(
+            json.dumps({
+                "MESSAGE": "timestamp regression",
+                "_SOURCE_REALTIME_TIMESTAMP": "1000000",
+                "timestamp": "2026-10-21T08:00:00Z",
+                **fields,
+            })
+            for fields in primary_fields
+        ),
+        encoding="utf-8",
+    )
+
+    parsed = parse_path(path, parser)
+
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    source = epoch + timedelta(seconds=1)
+    iso = datetime(2026, 10, 21, 8, tzinfo=timezone.utc)
+    assert [event.timestamp for event in parsed.events] == [
+        epoch, epoch, source, source, source, iso,
+    ]
+    assert parsed.warnings == []
