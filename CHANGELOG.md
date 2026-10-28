@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (0.2.0)
+
+- `logsieve explain CODE|LINE`: offline lookup in the pattern library by hex (`0x8024402C`, `8024402C`), signed or unsigned decimal, constant name, pattern id, event id, or a pasted log line. Shows the hex/signed/unsigned forms and the HRESULT facility, the explanation, checks, sources, and the uncertain flag. For a Win32 HRESULT (`0x8007xxxx`) it also tries the bare Win32 code. `--json` for scripts. Exit 1 when nothing matches.
+- `logsieve patterns --check [PATH ...]`: validates pattern YAML. Reports load errors, ids that collide with each other or the built-in library, non-https sources, empty explanations, and missing or failing `self_test` lines. Exit 1 on a problem. CI runs it on the built-in library.
+- `logsieve patterns --json` lists the library as JSON.
+- `diagnose --format json` and `--format all`: `report.json` (schema 1) with the suspected cause, findings, next steps, and the redacted error timeline. An output path ending in `.json` selects it. JSON goes through the same identifier leak check as Markdown and HTML.
+- ROADMAP.md with good first issues, issue forms (bug, feature, new error code), and a pull request template.
+
 ## 0.1.0 - 2026-10-21
 
 First release.

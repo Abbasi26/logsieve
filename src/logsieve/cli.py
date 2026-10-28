@@ -1,14 +1,17 @@
-"""Command line for diagnose, reveal, demo, and the pattern list."""
+"""Command line for diagnose, reveal, demo, explain, and the pattern list."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from logsieve import __version__
 from logsieve.demo import run_demo
 from logsieve.errors import LogsieveError
+from logsieve.explain import explain, render_text
+from logsieve.lint import lint_patterns
 from logsieve.llm import DEFAULT_MODEL, DEFAULT_URL, payload_text
 from logsieve.patterns import load_builtin, load_patterns
 from logsieve.patterns.matcher import LIBRARY_DIR
@@ -27,7 +30,12 @@ def _parser() -> argparse.ArgumentParser:
     diagnose = commands.add_parser("diagnose", help="read logs and write a redacted report")
     diagnose.add_argument("paths", nargs="+", type=Path, help="log files or directories")
     diagnose.add_argument("--output", type=Path, help="report file or directory")
-    diagnose.add_argument("--format", choices=("md", "html", "both"), dest="fmt")
+    diagnose.add_argument(
+        "--format",
+        choices=("md", "html", "json", "both", "all"),
+        dest="fmt",
+        help="both = md and html; all = md, html, and json",
+    )
     diagnose.add_argument("--vault", type=Path, help="write an encrypted mapping here")
     diagnose.add_argument("--vault-key", type=Path, help="Fernet key file (default: <vault>.key)")
     diagnose.add_argument(
@@ -68,9 +76,23 @@ def _parser() -> argparse.ArgumentParser:
     demo.add_argument("--output", type=Path, default=Path("logsieve-demo-out"))
     demo.set_defaults(func=_demo)
 
-    patterns = commands.add_parser("patterns", help="list the built-in pattern library")
+    patterns = commands.add_parser("patterns", help="list or check the pattern library")
     patterns.add_argument("--pattern-dir", type=Path)
+    patterns.add_argument(
+        "--check",
+        nargs="*",
+        type=Path,
+        metavar="PATH",
+        help="check YAML files or directories (default: the built-in library); exit 1 on a problem",
+    )
+    patterns.add_argument("--json", action="store_true", help="list as JSON")
     patterns.set_defaults(func=_patterns)
+
+    explain = commands.add_parser("explain", help="look up a code, constant, pattern id, or log line offline")
+    explain.add_argument("query", nargs="+", help="for example 0x8024402C, -2016345060, or a pasted log line")
+    explain.add_argument("--pattern-dir", type=Path, help="extra YAML patterns")
+    explain.add_argument("--json", action="store_true", help="print JSON")
+    explain.set_defaults(func=_explain)
     return parser
 
 
@@ -81,6 +103,8 @@ def _resolve_format(output: Path | None, fmt: str | None) -> str:
         return "md"
     if output.suffix.lower() == ".html":
         return "html"
+    if output.suffix.lower() == ".json":
+        return "json"
     if output.suffix.lower() in {".md", ".markdown"}:
         return "md"
     return "both"
@@ -138,13 +162,14 @@ def _diagnose(args: argparse.Namespace) -> int:
         sys.stdout.write(payload_text(outcome.payload) + "\n")
         print("logsieve: model payload is on stdout; nothing was sent", file=sys.stderr)
         return 0
+    stdout_text = outcome.json_text if fmt == "json" else outcome.markdown
     if outcome.llm_error:
         print(f"logsieve: model request failed ({outcome.llm_error})", file=sys.stderr)
         if args.output is None:
-            sys.stdout.write(outcome.markdown)
+            sys.stdout.write(stdout_text)
         return 3
     if args.output is None:
-        sys.stdout.write(outcome.markdown)
+        sys.stdout.write(stdout_text)
     return 0
 
 
@@ -181,14 +206,51 @@ def _demo(args: argparse.Namespace) -> int:
 
 
 def _patterns(args: argparse.Namespace) -> int:
+    if args.check is not None:
+        targets = list(args.check) or [LIBRARY_DIR]
+        result = lint_patterns(targets)
+        for problem in result.problems:
+            print(problem)
+        status = "ok" if result.ok else f"{len(result.problems)} problem(s)"
+        print(f"checked {result.patterns} pattern(s) in {result.files} file(s): {status}", file=sys.stderr)
+        return 0 if result.ok else 1
     if args.pattern_dir:
         patterns = load_patterns(LIBRARY_DIR, args.pattern_dir)
     else:
         patterns = load_builtin()
+    if args.json:
+        rows = [
+            {
+                "id": pattern.id,
+                "match": pattern.code_label,
+                "title": pattern.title,
+                "area": pattern.area,
+                "category": pattern.category,
+                "confidence": pattern.confidence,
+                "uncertain": pattern.uncertain,
+                "sources": list(pattern.sources),
+            }
+            for pattern in patterns
+        ]
+        sys.stdout.write(json.dumps(rows, indent=2) + "\n")
+        return 0
     for pattern in patterns:
         flag = " uncertain" if pattern.uncertain else ""
         print(f"{pattern.id}\t{pattern.code_label}\t{pattern.confidence}{flag}\t{pattern.title}")
     return 0
+
+
+def _explain(args: argparse.Namespace) -> int:
+    if args.pattern_dir:
+        patterns = load_patterns(LIBRARY_DIR, args.pattern_dir)
+    else:
+        patterns = load_builtin()
+    result = explain(" ".join(args.query), patterns)
+    if args.json:
+        sys.stdout.write(json.dumps(result.as_dict(), indent=2) + "\n")
+    else:
+        sys.stdout.write(render_text(result))
+    return 0 if result.matches else 1
 
 
 def main(argv: list[str] | None = None) -> int:

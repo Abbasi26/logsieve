@@ -41,7 +41,7 @@ The names in that reveal line are fictional (`northwind.example`, TEST-NET-3, th
 logsieve diagnose C:\Windows\CCM\Logs I:\Intune\Logs --output C:\Temp\logsieve-out --vault C:\Temp\logsieve-vault.json
 ```
 
-`--output` as a directory writes `report.md` and `report.html`. A path ending in `.md` or `.html` writes that file. With no `--output`, Markdown goes to stdout.
+`--output` as a directory writes `report.md` and `report.html` (`--format all` adds `report.json`). A path ending in `.md`, `.html`, or `.json` writes that file. With no `--output`, Markdown goes to stdout.
 
 The report has the error timeline, every matched pattern (confidence, whether it is uncertain, the public source, a redacted sample), a suspected cause, and checks. The cause is a ranking hint. Where one code is listed as a possible symptom of another, the report says so, and it says that the link is not proof. logsieve does not change the device.
 
@@ -59,9 +59,38 @@ Useful flags:
 - `--hostname NAME` and `--username NAME` (repeatable) for names that never appear in a parsed field
 - `--parser auto|cmtrace|ime|evtx|event-xml|event-csv|journald|plain`
 - `--pattern-dir DIR` for extra YAML
-- `logsieve patterns` lists the built-in library
+- `logsieve patterns` lists the built-in library (`--json` for scripts)
 
 `--no-redact` leaves the text unchanged and refuses `--llm` and `--show-payload`.
+
+## Look up a code without a log
+
+```bash
+logsieve explain 0x8024402C
+logsieve explain -2016345060          # signed decimal from an IME log
+logsieve explain "AppEnforce failed with 0x87D00324"
+logsieve explain --json 0x80072EE7
+```
+
+`explain` reads only the local library. It prints the code in hex, signed, and unsigned form with the HRESULT facility, then every pattern that matches: the explanation, what to check, the public sources, and whether the meaning is marked uncertain. For a Win32 HRESULT (`0x8007xxxx`) it also tries the bare Win32 code. Exit code `1` means the library has no entry, which is not the same as "harmless".
+
+## Machine-readable output
+
+```bash
+logsieve diagnose .\Logs --format json > diagnosis.json
+logsieve diagnose .\Logs --format all --output .\out    # report.md, report.html, report.json
+```
+
+`report.json` (schema `1`) holds the suspected cause, every finding with samples and sources, the next steps, and the redacted error timeline. It is built from the same redacted fields as the other reports and goes through the same leak check, so a ticket system or SIEM can ingest it without the original names.
+
+## Add your own patterns
+
+```bash
+logsieve patterns --check .\my-patterns
+logsieve diagnose .\Logs --pattern-dir .\my-patterns
+```
+
+`--check` loads every YAML file, then reports ids that collide with each other or the built-in library, sources that are not `https://`, empty explanations, and `self_test` lines that are missing or do not match. It exits `1` when something is wrong, so it fits in a CI step. Without a path it checks the built-in library.
 
 ## A model, still local
 
@@ -95,13 +124,15 @@ logsieve needs read access to the files you pass. It does not need an administra
 
 ## Tests
 
-`pytest` covers the parsers, a pseudonymization round trip (the original identifiers must not appear in the model payload), the pattern self-tests, and the demo. No test contacts the network. GitHub Actions runs the same suite on Python 3.11 and 3.12.
+`pytest` covers the parsers, a pseudonymization round trip (the original identifiers must not appear in the model payload), the pattern self-tests, and the demo. No test contacts the network. GitHub Actions runs the same suite on Python 3.11, 3.12, and 3.13, checks the pattern library with `logsieve patterns --check`, and runs the demo, `explain`, and the JSON report as a smoke test.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). A new error code needs a public source URL, a fictional `self_test` line, and `uncertain: true` when the source is ambiguous.
 
 ## Roadmap
+
+[ROADMAP.md](ROADMAP.md) lists what comes next and a set of good first issues.
 
 Not in this version, and not claimed:
 

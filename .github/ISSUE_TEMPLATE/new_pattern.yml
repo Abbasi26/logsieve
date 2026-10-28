@@ -1,0 +1,40 @@
+name: New error code or pattern
+description: Propose a MECM, Intune, Windows Update, or Win32 code for the library
+labels: ["patterns"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste real hostnames, accounts, tenant ids, or IP addresses. Run the line through `logsieve diagnose` first, or replace names with `example` values.
+  - type: input
+    id: code
+    attributes:
+      label: Code or constant
+      placeholder: 0x80070005 / E_ACCESSDENIED
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public source (https URL)
+      description: A vendor page or documentation that defines the code. A pattern without a public source is not merged.
+    validations:
+      required: true
+  - type: textarea
+    id: line
+    attributes:
+      label: Fictional or redacted log line that should match
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: meaning
+    attributes:
+      label: What it means and what to check
+  - type: dropdown
+    id: certain
+    attributes:
+      label: Is the meaning unambiguous?
+      options:
+        - "Yes, the source is clear"
+        - "No, mark it uncertain"
