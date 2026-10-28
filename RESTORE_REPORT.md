@@ -1,9 +1,8 @@
 # Restore report: logsieve
 
-- **Transcript**: `bc-9fad47a4-0cc3-5145-91f4-84c133ed8684.jsonl`
 - **Target repo**: `github.com/Abbasi26/logsieve` (empty; push deferred to parent)
 - **Restored at**: 2026-10-27 Europe/Berlin
-- **Method**: Replay of Cursor `search_replace` / `editFileResult` unified diffs in order (script `/workspace/restore/_scripts/reconstruct_from_transcript.py`). Seeded with the cloud-agent README stub, then applied 79 edits → 50 creates.
+- **Method**: Replay of Cursor `search_replace` / `editFileResult` unified diffs in order (script `reconstruct_from_transcript.py`). Seeded with the cloud-agent README stub, then applied 79 edits → 50 creates.
 
 ## Transcript vs generated
 
