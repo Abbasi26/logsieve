@@ -157,7 +157,7 @@ Not in this version, and not claimed:
 
 ## Status
 
-Version 0.1.0, early but usable. Python package `logsieve`. MIT licensed. Every push runs the test suite in GitHub Actions (`.github/workflows/test.yml`).
+Version 0.2.0, early but usable. Python package `logsieve`. MIT licensed. Every push runs the test suite in GitHub Actions (`.github/workflows/test.yml`).
 
 ## Install
 
