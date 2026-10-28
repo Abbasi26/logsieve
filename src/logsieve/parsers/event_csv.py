@@ -32,12 +32,10 @@ def _norm_header(value: str) -> str:
 
 
 def looks_like_event_csv(text: str) -> bool:
-    first = ""
-    for line in text.splitlines():
-        if line.strip():
-            first = _norm_header(line)
-            break
-    return "message" in first and ("event id" in first or "eventid" in first)
+    reader = csv.reader(io.StringIO(text))
+    header = next((row for row in reader if any(field.strip() for field in row)), [])
+    names = {_norm_header(field) for field in header}
+    return bool(names & ALIASES["message"]) and bool(names & ALIASES["event_id"])
 
 
 def _parse_time(value: str) -> datetime | None:
@@ -97,5 +95,3 @@ def parse_event_csv(text: str, source: Path) -> ParseResult:
             )
         )
     return result
-# Skipped: broader CSV policy changes; tests could not run without writable temp storage.
-# Risk: malformed records are omitted with a warning; automatic fallback remains unchanged.
