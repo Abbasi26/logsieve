@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -450,6 +451,67 @@ th, td {{
 </body>
 </html>
 """
+
+
+JSON_SCHEMA_VERSION = 1
+
+
+def _finding_json(finding: Finding) -> dict:
+    pattern = finding.pattern
+    return {
+        "id": pattern.id,
+        "title": pattern.title,
+        "match": pattern.code_label,
+        "area": pattern.area,
+        "category": pattern.category,
+        "severity": pattern.severity,
+        "confidence": pattern.confidence,
+        "uncertain": pattern.uncertain,
+        "events": finding.count,
+        "samples": list(finding.samples),
+        "checks": list(pattern.fix_hints),
+        "sources": list(pattern.sources),
+    }
+
+
+def render_json(report: Report) -> str:
+    """Machine-readable report. Built from the same redacted fields as Markdown and HTML."""
+    diagnosis = report.diagnosis
+    errors = [event for event in report.events if event.severity in {"error", "critical"}]
+    document = {
+        "schema": JSON_SCHEMA_VERSION,
+        "tool": "logsieve",
+        "generated": format_timestamp(report.generated),
+        "inputs": list(report.inputs),
+        "events": report.event_count,
+        "errors": report.error_count,
+        "redaction": report.redaction_note,
+        "vault": report.vault_note,
+        "llm": report.llm_note,
+        "suspected_cause": _finding_json(diagnosis.primary) if diagnosis.primary else None,
+        "ranking_confidence": diagnosis.confidence,
+        "narrative": diagnosis.narrative,
+        "next_steps": list(diagnosis.steps),
+        "supporting": [item.pattern.id for item in diagnosis.supporting],
+        "consistent_with_cause": [item.pattern.id for item in diagnosis.explained],
+        "separate_findings": [item.pattern.id for item in diagnosis.independent],
+        "notes": [item.pattern.id for item in diagnosis.annotations],
+        "findings": [_finding_json(item) for item in diagnosis.findings],
+        "timeline": [
+            {
+                "time": format_timestamp(event.timestamp) or None,
+                "severity": event.severity,
+                "source": _basename(event),
+                "user": event.display_user or "",
+                "message": event.display_message or "",
+            }
+            for event in errors[:200]
+        ],
+        "timeline_truncated": len(errors) > 200,
+        "warnings": list(report.warnings),
+        "model_note": report.llm_answer.strip() if report.llm_answer else None,
+    }
+    return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
 
 
 def utcnow() -> datetime:

@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,3 +20,11 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Test
         run: python -m pytest
+      - name: Check the pattern library
+        run: logsieve patterns --check
+      - name: Demo and explain smoke test
+        run: |
+          logsieve demo --output demo-out
+          logsieve explain 0x8024402C
+          logsieve diagnose src/logsieve/demo_logs --format json --output demo-out/report.json
+          python -c "import json; d=json.load(open('demo-out/report.json')); assert d['suspected_cause']['id']=='wu-name-not-resolved'"

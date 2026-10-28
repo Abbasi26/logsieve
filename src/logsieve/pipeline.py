@@ -15,7 +15,7 @@ from logsieve.parsers import iter_input_files, parse_path
 from logsieve.patterns.matcher import LIBRARY_DIR, load_patterns, match_events
 from logsieve.pseudo import Mapping, RedactOptions, Session, find_leaks, save_mapping
 from logsieve.pseudo.vault import DEFAULT_ITERATIONS
-from logsieve.report import Report, redaction_note, render_html, render_markdown, utcnow
+from logsieve.report import Report, redaction_note, render_html, render_json, render_markdown, utcnow
 
 
 @dataclass
@@ -31,6 +31,7 @@ class Outcome:
     warnings: list[str]
     mapping: Mapping
     wrote: list[Path] = field(default_factory=list)
+    json_text: str = ""
 
 
 def _sort_key(event: LogEvent) -> tuple:
@@ -110,21 +111,34 @@ def _basename_display(path: str) -> str:
     return path.replace("\\", "/").rsplit("/", 1)[-1]
 
 
-def write_reports(output: Path, fmt: str, markdown: str, html: str) -> list[Path]:
+def write_reports(output: Path, fmt: str, markdown: str, html: str, json_text: str = "") -> list[Path]:
     wrote: list[Path] = []
     treat_as_dir = output.is_dir() or (not output.exists() and output.suffix == "")
     if treat_as_dir:
         output.mkdir(parents=True, exist_ok=True)
-        if fmt in {"md", "both"}:
+        if fmt in {"md", "both", "all"}:
             path = output / "report.md"
             path.write_text(markdown, encoding="utf-8")
             wrote.append(path)
-        if fmt in {"html", "both"}:
+        if fmt in {"html", "both", "all"}:
             path = output / "report.html"
             path.write_text(html, encoding="utf-8")
             wrote.append(path)
+        if fmt in {"json", "all"}:
+            path = output / "report.json"
+            path.write_text(json_text, encoding="utf-8")
+            wrote.append(path)
         return wrote
     output.parent.mkdir(parents=True, exist_ok=True)
+    if fmt == "json":
+        output.write_text(json_text, encoding="utf-8")
+        return [output]
+    if fmt == "all":
+        stem = output.with_suffix("")
+        paths = [stem.with_suffix(".md"), stem.with_suffix(".html"), stem.with_suffix(".json")]
+        for path, text in zip(paths, (markdown, html, json_text)):
+            path.write_text(text, encoding="utf-8")
+        return paths
     if fmt == "both":
         md_path = output if output.suffix.lower() == ".md" else output.with_suffix(".md")
         html_path = output if output.suffix.lower() == ".html" else output.with_suffix(".html")
@@ -217,7 +231,8 @@ def execute(
     # Inputs listed once per source file, in first-seen order, already redacted via display_source.
     markdown = render_markdown(report)
     html = render_html(report)
-    report_leaks = len(find_leaks(markdown + "\n" + html, session.mapping)) if options.enabled else 0
+    json_text = render_json(report)
+    report_leaks = len(find_leaks(markdown + "\n" + html + "\n" + json_text, session.mapping)) if options.enabled else 0
     payload = None
     payload_leaks = 0
     llm_error = None
@@ -234,6 +249,7 @@ def execute(
             report.llm_answer = None
             markdown = render_markdown(report)
             html = render_html(report)
+            json_text = render_json(report)
         else:
             report.llm_note = (
                 f"a completion was requested from {llm_url} model {llm_model}."
@@ -242,13 +258,15 @@ def execute(
             report.llm_answer = answer
             markdown = render_markdown(report)
             html = render_html(report)
-            report_leaks = len(find_leaks(markdown + "\n" + html, session.mapping))
+            json_text = render_json(report)
+            report_leaks = len(find_leaks(markdown + "\n" + html + "\n" + json_text, session.mapping))
     wrote: list[Path] = []
     if output is not None and report_leaks == 0:
-        wrote = write_reports(output, fmt, markdown, html)
+        wrote = write_reports(output, fmt, markdown, html, json_text)
     return Outcome(
         markdown=markdown,
         html=html,
+        json_text=json_text,
         payload=payload,
         report_leaks=report_leaks,
         payload_leaks=payload_leaks,
