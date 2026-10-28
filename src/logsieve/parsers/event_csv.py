@@ -59,6 +59,10 @@ def _parse_time(value: str) -> datetime | None:
 def parse_event_csv(text: str, source: Path) -> ParseResult:
     result = ParseResult()
     reader = csv.DictReader(io.StringIO(text))
+    while reader.fieldnames is not None and not any(
+        field.strip() for field in reader.fieldnames
+    ):
+        reader.fieldnames = next(reader.reader, None)
     if not reader.fieldnames:
         result.warnings.append(f"{source}: CSV has no header")
         return result
