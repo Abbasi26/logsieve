@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from logsieve.cause import Diagnosis, build_diagnosis
@@ -35,12 +36,10 @@ class Outcome:
 def _sort_key(event: LogEvent) -> tuple:
     stamp = event.timestamp
     if stamp is None:
-        return (1, 0.0, event.order)
+        return (1, timedelta(0), event.order)
     if stamp.tzinfo is None:
-        from datetime import timezone
-
         stamp = stamp.replace(tzinfo=timezone.utc)
-    return (0, stamp.timestamp(), event.order)
+    return (0, stamp - datetime(1970, 1, 1, tzinfo=timezone.utc), event.order)
 
 
 def collect_events(paths: list[Path], parser: str) -> tuple[list[LogEvent], list[str]]:
