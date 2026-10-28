@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from logsieve.models import LogEvent, ParseResult
@@ -43,8 +43,9 @@ def _timestamp(obj: dict) -> datetime | None:
         raw = obj.get("_SOURCE_REALTIME_TIMESTAMP")
     if raw not in (None, ""):
         try:
-            seconds = int(str(raw)) / 1_000_000
-            return datetime.fromtimestamp(seconds, tz=timezone.utc)
+            return datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(
+                microseconds=int(str(raw))
+            )
         except (ValueError, OSError, OverflowError):
             pass
     iso = obj.get("timestamp") or obj.get("__TIMESTAMP")
@@ -87,3 +88,4 @@ def parse_journald(text: str, source: Path) -> ParseResult:
             )
         )
     return result
+
