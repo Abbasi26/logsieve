@@ -74,6 +74,11 @@ def parse_event_csv(text: str, source: Path) -> ParseResult:
         result.warnings.append(f"{source}: CSV has no message column")
         return result
     for row in reader:
+        if None in row:
+            result.warnings.append(
+                f"{source}:{reader.line_num}: skipped CSV row with extra fields"
+            )
+            continue
         if not any((value or "").strip() for value in row.values()):
             continue
         level = (row.get(columns.get("level", ""), "") or "").strip()
@@ -92,3 +97,5 @@ def parse_event_csv(text: str, source: Path) -> ParseResult:
             )
         )
     return result
+# Skipped: broader CSV policy changes; tests could not run without writable temp storage.
+# Risk: malformed records are omitted with a warning; automatic fallback remains unchanged.

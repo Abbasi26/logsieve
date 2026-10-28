@@ -214,3 +214,30 @@ def test_journald_zero_timestamp_and_fallbacks(tmp_path: Path, parser: str):
         epoch, epoch, source, source, source, iso,
     ]
     assert parsed.warnings == []
+
+
+def test_event_csv_skips_extra_fields_and_keeps_valid_rows():
+    from logsieve.parsers.event_csv import parse_event_csv
+
+    source = Path("events.csv")
+    parsed = parse_event_csv(
+        "Level,Event ID,Message\n"
+        "Error,31,before\n"
+        "Error,32,malformed,private-surplus\n"
+        'Warning,33,"after, retry"\n',
+        source,
+    )
+
+    assert [
+        (event.event_id, event.message, event.severity, event.source_type)
+        for event in parsed.events
+    ] == [
+        ("31", "before", "error", "event_csv"),
+        ("33", "after, retry", "warning", "event_csv"),
+    ]
+    assert parsed.warnings == [
+        f"{source}:3: skipped CSV row with extra fields"
+    ]
+
+# Skipped: broader CSV policy changes; tests could not run without writable temp storage.
+# Risk: malformed records are omitted with a warning; automatic fallback remains unchanged.
