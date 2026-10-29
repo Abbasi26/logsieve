@@ -101,7 +101,7 @@ def _pattern_block_md(finding: Finding) -> list[str]:
     return lines
 
 
-def render_markdown(report: Report) -> str:
+def render_markdown(report: Report, timeline_limit: int = 200) -> str:
     diagnosis = report.diagnosis
     lines = [
         "# logsieve diagnosis",
@@ -165,9 +165,10 @@ def render_markdown(report: Report) -> str:
     else:
         for finding in diagnosis.findings:
             lines.extend(_pattern_block_md(finding))
-    lines.extend(["## Error timeline", ""])
+    lines.extend(["", "## Error timeline", ""])
     errors = [event for event in report.events if event.severity in {"error", "critical"}]
-    shown = errors[:200]
+    limit = len(errors) if timeline_limit <= 0 else min(timeline_limit, len(errors))
+    shown = errors[:limit]
     if not shown:
         lines.append("No error or critical events.")
     else:
@@ -256,7 +257,7 @@ def _pattern_html(finding: Finding) -> str:
     return "\n".join(parts)
 
 
-def render_html(report: Report) -> str:
+def render_html(report: Report, timeline_limit: int = 200) -> str:
     diagnosis = report.diagnosis
     inputs = "".join(f"<li>{html.escape(item)}</li>" for item in report.inputs) or "<li>none</li>"
     if diagnosis.primary is None:
@@ -305,7 +306,9 @@ def render_html(report: Report) -> str:
         patterns = "\n".join(_pattern_html(item) for item in diagnosis.findings)
     else:
         patterns = _p("No library pattern matched.")
-    errors = [event for event in report.events if event.severity in {"error", "critical"}][:200]
+    all_errors = [event for event in report.events if event.severity in {"error", "critical"}]
+    limit = len(all_errors) if timeline_limit <= 0 else min(timeline_limit, len(all_errors))
+    errors = all_errors[:limit]
     if errors:
         rows = []
         for event in errors:
@@ -320,7 +323,7 @@ def render_html(report: Report) -> str:
                 "</tr>"
             )
         extra = ""
-        total = sum(1 for event in report.events if event.severity in {"error", "critical"})
+        total = len(all_errors)
         if total > len(errors):
             extra = _p(f"Timeline truncated to {len(errors)} of {total} error events.")
         timeline = (
@@ -474,10 +477,12 @@ def _finding_json(finding: Finding) -> dict:
     }
 
 
-def render_json(report: Report) -> str:
+def render_json(report: Report, timeline_limit: int = 200) -> str:
     """Machine-readable report. Built from the same redacted fields as Markdown and HTML."""
     diagnosis = report.diagnosis
-    errors = [event for event in report.events if event.severity in {"error", "critical"}]
+    all_errors = [event for event in report.events if event.severity in {"error", "critical"}]
+    limit = len(all_errors) if timeline_limit <= 0 else min(timeline_limit, len(all_errors))
+    errors = all_errors[:limit]
     document = {
         "schema": JSON_SCHEMA_VERSION,
         "tool": "logsieve",
@@ -505,9 +510,9 @@ def render_json(report: Report) -> str:
                 "user": event.display_user or "",
                 "message": event.display_message or "",
             }
-            for event in errors[:200]
+            for event in errors
         ],
-        "timeline_truncated": len(errors) > 200,
+        "timeline_truncated": len(all_errors) > len(errors),
         "warnings": list(report.warnings),
         "model_note": report.llm_answer.strip() if report.llm_answer else None,
     }

@@ -50,6 +50,12 @@ def _parser() -> argparse.ArgumentParser:
     diagnose.add_argument("--username", action="append", default=[], help="extra account to mask (repeatable)")
     diagnose.add_argument("--pattern-dir", type=Path, help="extra YAML patterns")
     diagnose.add_argument(
+        "--timeline-limit",
+        type=int,
+        default=200,
+        help="maximum error events in the timeline (default 200, 0 = no limit)",
+    )
+    diagnose.add_argument(
         "--llm",
         nargs="?",
         const=DEFAULT_URL,
@@ -143,6 +149,7 @@ def _diagnose(args: argparse.Namespace) -> int:
         llm_timeout=args.llm_timeout,
         llm_api_key=os_api_key(),
         show_payload=args.show_payload,
+        timeline_limit=args.timeline_limit,
     )
     if outcome.report_leaks:
         print(

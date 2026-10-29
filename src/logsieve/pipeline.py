@@ -169,6 +169,7 @@ def execute(
     llm_timeout: float = 60,
     llm_api_key: str | None = None,
     show_payload: bool = False,
+    timeline_limit: int = 200,
 ) -> Outcome:
     options = options or RedactOptions()
     if (llm_url or show_payload) and not options.enabled:
@@ -229,9 +230,9 @@ def execute(
         warnings=warnings,
     )
     # Inputs listed once per source file, in first-seen order, already redacted via display_source.
-    markdown = render_markdown(report)
-    html = render_html(report)
-    json_text = render_json(report)
+    markdown = render_markdown(report, timeline_limit)
+    html = render_html(report, timeline_limit)
+    json_text = render_json(report, timeline_limit)
     report_leaks = len(find_leaks(markdown + "\n" + html + "\n" + json_text, session.mapping)) if options.enabled else 0
     payload = None
     payload_leaks = 0
@@ -247,18 +248,18 @@ def execute(
             llm_error = str(exc)
             report.llm_note = f"the request to {llm_url} failed ({llm_error}). This report was still written."
             report.llm_answer = None
-            markdown = render_markdown(report)
-            html = render_html(report)
-            json_text = render_json(report)
+            markdown = render_markdown(report, timeline_limit)
+            html = render_html(report, timeline_limit)
+            json_text = render_json(report, timeline_limit)
         else:
             report.llm_note = (
                 f"a completion was requested from {llm_url} model {llm_model}."
                 " Only the redacted payload was sent."
             )
             report.llm_answer = answer
-            markdown = render_markdown(report)
-            html = render_html(report)
-            json_text = render_json(report)
+            markdown = render_markdown(report, timeline_limit)
+            html = render_html(report, timeline_limit)
+            json_text = render_json(report, timeline_limit)
             report_leaks = len(find_leaks(markdown + "\n" + html + "\n" + json_text, session.mapping))
     wrote: list[Path] = []
     if output is not None and report_leaks == 0:
