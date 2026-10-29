@@ -6,6 +6,14 @@ Local diagnosis for ConfigMgr, Intune, and Windows event logs, with the identifi
 
 A client cannot install an update, and the useful lines are spread across `WUAHandler.log`, `AppEnforce.log`, `IntuneManagementExtension.log`, and a Windows Update event. Those lines also name the laptop, the user, and the WSUS server. logsieve puts the lines on one timeline, matches the codes it knows, and writes a report in which `laptop-07.northwind.example` has become `LS_HOST_2`. The mapping stays in an encrypted file on this computer. `logsieve reveal` puts a name back when you want to read an answer. A model is optional and off unless you ask.
 
+## Demo video
+
+[![Demo video for logsieve](docs/media/brag.jpg)](docs/media/brag.mp4)
+
+logsieve reads ConfigMgr, Intune and Windows event logs locally, replaces the identifiers with stable tokens, and writes the report with the error code and its source. `logsieve explain 0x8024402C` answers from the bundled library. No network, no model unless you ask for one. (Click the image to play the video.)
+
+Music: Sascha Ende ([ende.app](https://ende.app)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ## Quickstart
 
 Python 3.11 or newer.
