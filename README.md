@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-<p align="center">Diagnoses ConfigMgr, Intune and Windows event logs locally, with identifiers removed first.</p>
+<p align="center">One timeline from scattered Windows logs, with identifiers redacted.</p>
 
 <p align="center">
   <img src="docs/assets/readme-hero.png" width="800" alt="Terminal output of logsieve demo: suspected cause, a redacted error timeline with LS_HOST tokens, a reveal line, report leak check clean, llm off, and logsieve explain 0x8024402C.">
