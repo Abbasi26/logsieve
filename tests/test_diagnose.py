@@ -2,7 +2,6 @@ import json
 import urllib.request
 from pathlib import Path
 
-import pytest
 
 from logsieve.cli import main
 from logsieve.demo import DEMO_LOGS, EMAIL, IDENTIFIERS
