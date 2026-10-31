@@ -1,3 +1,17 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/logo-light.svg">
+    <img src="docs/assets/logo-light.svg" alt="logsieve" height="64">
+  </picture>
+</p>
+
+<p align="center">One timeline from scattered Windows logs, with identifiers redacted.</p>
+
+<p align="center">
+  <img src="docs/assets/readme-hero.png" width="800" alt="Terminal output of logsieve demo: suspected cause, a redacted error timeline with LS_HOST tokens, a reveal line, report leak check clean, llm off, and logsieve explain 0x8024402C.">
+</p>
+
 # logsieve
 
 [![CI](https://github.com/Abbasi26/logsieve/actions/workflows/test.yml/badge.svg)](https://github.com/Abbasi26/logsieve/actions/workflows/test.yml)
