@@ -9,3 +9,4 @@ logsieve-demo-out/
 *.key
 agent-tools/
 uploads/
+.tmp/
