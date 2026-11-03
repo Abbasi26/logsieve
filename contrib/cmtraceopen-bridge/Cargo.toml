@@ -1,0 +1,17 @@
+[package]
+name = "logsieve-cmtraceopen"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+description = "Optional logsieve bridge: parses one log file with the CMTrace Open parser engine and prints JSON."
+publish = false
+
+[[bin]]
+name = "logsieve-cmtraceopen"
+path = "src/main.rs"
+
+[dependencies]
+# Parser engine of CMTrace Open by Adam Gell, MIT licensed: https://github.com/adamgell/cmtraceopen
+cmtraceopen-parser = "=0.1.1"
+serde_json = "1"
