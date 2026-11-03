@@ -10,7 +10,7 @@ from pathlib import Path
 from logsieve import __version__
 from logsieve.demo import run_demo
 from logsieve.errors import LogsieveError
-from logsieve.explain import explain, render_text
+from logsieve.explain import explain, render_text, first_source
 from logsieve.lint import lint_patterns
 from logsieve.llm import DEFAULT_MODEL, DEFAULT_URL, payload_text
 from logsieve.patterns import load_builtin, load_patterns
@@ -92,6 +92,7 @@ def _parser() -> argparse.ArgumentParser:
     explain.add_argument("query", nargs="+", help="for example 0x8024402C, -2016345060, or a pasted log line")
     explain.add_argument("--pattern-dir", type=Path, help="extra YAML patterns")
     explain.add_argument("--json", action="store_true", help="print JSON")
+    explain.add_argument("--open", action="store_true", help="print only the first source URL (for piping to a browser)")
     explain.set_defaults(func=_explain)
     return parser
 
@@ -246,6 +247,13 @@ def _explain(args: argparse.Namespace) -> int:
     else:
         patterns = load_builtin()
     result = explain(" ".join(args.query), patterns)
+    if args.open:
+        source = first_source(result)
+        if source:
+            sys.stdout.write(source + "\n")
+            return 0
+        print("logsieve: no source URL found for query", file=sys.stderr)
+        return 1
     if args.json:
         sys.stdout.write(json.dumps(result.as_dict(), indent=2) + "\n")
     else:

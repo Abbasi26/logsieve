@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `logsieve explain --open`: prints only the first source URL of the first match so it can be piped to a browser. Exit 1 with a message on stderr when no match or no source is found.
+
 ## 0.2.0 - 2026-10-28
 
 - `logsieve explain CODE|LINE`: offline lookup in the pattern library by hex (`0x8024402C`, `8024402C`), signed or unsigned decimal, constant name, pattern id, event id, or a pasted log line. Shows the hex/signed/unsigned forms and the HRESULT facility, the explanation, checks, sources, and the uncertain flag. For a Win32 HRESULT (`0x8007xxxx`) it also tries the bare Win32 code. `--json` for scripts. Exit 1 when nothing matches.

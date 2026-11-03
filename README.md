@@ -84,9 +84,12 @@ logsieve explain 0x8024402C
 logsieve explain -2016345060          # signed decimal from an IME log
 logsieve explain "AppEnforce failed with 0x87D00324"
 logsieve explain --json 0x80072EE7
+logsieve explain --open 0x8024402C    # print only the first source URL
 ```
 
 `explain` reads only the local library. It prints the code in hex, signed, and unsigned form with the HRESULT facility, then every pattern that matches: the explanation, what to check, the public sources, and whether the meaning is marked uncertain. For a Win32 HRESULT (`0x8007xxxx`) it also tries the bare Win32 code. Exit code `1` means the library has no entry, which is not the same as "harmless".
+
+`--open` prints only the first source URL of the first match (one line) so it can be piped to a browser (`logsieve explain --open 0x8024402C | xargs xdg-open`). If no match or no source is found, it prints nothing to stdout, writes a message to stderr, and exits with code `1`.
 
 ## Machine-readable output
 
