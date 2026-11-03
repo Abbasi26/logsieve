@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 - 2026-11-03
+
+### Fixed
+- MSI codes 1602, 1603, 1605, 1618, 1633, 1638, 1642 now match only in error/install/failure context (within 40 characters of keywords such as "exit code", "error", "failed", "failure", "return value", "returned", "install", "uninstall", "installed", "uninstalled", "msi", "msiexec", "fatal"). They no longer match inside SIDs, thread IDs, build numbers, or other numeric fields.
+- Leak check now uses word boundaries for all identifier classes (long tokens ≥8 chars, IPs, SIDs, emails). Substrings inside version strings (e.g., `10.0.0.1` in `10.0.0.1234`) or compound host tokens (e.g., `laptop-07` in `laptop-07setup`) no longer cause false-positive Exit 2. Real unredacted tokens are still caught. Added `northwind` to `COMMON_LABELS` to avoid false positives on the canonical test domain.
+
 ## 0.2.0 - 2026-10-28
 
 - `logsieve explain CODE|LINE`: offline lookup in the pattern library by hex (`0x8024402C`, `8024402C`), signed or unsigned decimal, constant name, pattern id, event id, or a pasted log line. Shows the hex/signed/unsigned forms and the HRESULT facility, the explanation, checks, sources, and the uncertain flag. For a Win32 HRESULT (`0x8007xxxx`) it also tries the bare Win32 code. `--json` for scripts. Exit 1 when nothing matches.
