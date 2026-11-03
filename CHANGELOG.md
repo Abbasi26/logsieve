@@ -3,8 +3,8 @@
 ## 0.2.1 - 2026-11-03
 
 ### Fixed
-- MSI codes 1602, 1603, 1605, 1618, 1633, 1638, 1642 now match only in error/install/failure context (within 40 characters of keywords such as "exit code", "error", "failed", "failure", "return value", "returned", "install", "uninstall", "installed", "uninstalled", "msi", "msiexec", "fatal"). They no longer match inside SIDs, thread IDs, build numbers, or other numeric fields.
-- Leak check now uses word boundaries for all identifier classes (long tokens ≥8 chars, IPs, SIDs, emails). Substrings inside version strings (e.g., `10.0.0.1` in `10.0.0.1234`) or compound host tokens (e.g., `laptop-07` in `laptop-07setup`) no longer cause false-positive Exit 2. Real unredacted tokens are still caught. Added `northwind` to `COMMON_LABELS` to avoid false positives on the canonical test domain.
+- MSI codes 1602, 1603, 1605, 1618, 1633, 1638, 1642 now match only in exit-status phrasing (within 40 characters of keywords: "exit code", "exitcode", "return code", "returning", "terminated with exitcode", "returned"). They no longer match on ".msi" substrings, bare words like error/failed/install/msi near the number, SIDs, thread IDs, or build numbers.
+- Leak check now uses word boundaries for all identifier classes (long tokens ≥8 chars, IPs, SIDs, emails). Substrings inside version strings (e.g., `10.0.0.1` in `10.0.0.1234`) or compound host tokens (e.g., `laptop-07` in `laptop-07setup`) no longer cause false-positive Exit 2. Real unredacted tokens are still caught. Host labels with trailing dots (e.g., `dc01.`, `laptop-07.`) are detected; `northwind` removed from `COMMON_LABELS`. IPv6 addresses (full and compressed forms) are covered.
 
 ## 0.2.0 - 2026-10-28
 

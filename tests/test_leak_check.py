@@ -54,3 +54,32 @@ class TestLeakCheckBoundaries:
         assert "host.example.com" in leaks, "token in parentheses should leak (punctuation is boundary)"
         leaks = find_leaks("host [host.example.com] failed", session.mapping)
         assert "host.example.com" in leaks, "token in brackets should leak (punctuation is boundary)"
+
+    def test_host_label_with_trailing_dot_detected(self):
+        session = Session()
+        session.redact("dc01.example.com")
+        session.redact("laptop-07.example.com")
+        # Short host label with trailing dot should be detected
+        leaks = find_leaks("host dc01. failed", session.mapping)
+        assert "dc01" in leaks, "dc01 with trailing dot should be detected"
+        leaks = find_leaks("host laptop-07. failed", session.mapping)
+        assert "laptop-07" in leaks, "laptop-07 with trailing dot should be detected"
+
+    def test_host_label_in_compound_token_not_detected(self):
+        session = Session()
+        session.redact("laptop-07.example.com")
+        # Host label inside a longer compound token should NOT be detected
+        leaks = find_leaks("service laptop-07setup started", session.mapping)
+        assert "laptop-07" not in leaks, "laptop-07 inside laptop-07setup should not leak"
+
+    def test_ipv6_full_address_detected(self):
+        session = Session()
+        session.redact("fe80::1ff:fe23:4567:890a")
+        leaks = find_leaks("server fe80::1ff:fe23:4567:890a responded", session.mapping)
+        assert "fe80::1ff:fe23:4567:890a" in leaks, "full IPv6 address should be detected"
+
+    def test_ipv6_compressed_address_detected(self):
+        session = Session()
+        session.redact("2001:db8::1")
+        leaks = find_leaks("server 2001:db8::1 responded", session.mapping)
+        assert "2001:db8::1" in leaks, "compressed IPv6 address should be detected"

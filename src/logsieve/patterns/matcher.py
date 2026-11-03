@@ -16,18 +16,11 @@ CONFIDENCE = {"high", "medium", "low"}
 MSI_CODES = {"1602", "1603", "1605", "1618", "1633", "1638", "1642"}
 MSI_KEYWORDS = [
     "exit code",
-    "error",
-    "failed",
-    "failure",
-    "return value",
+    "exitcode",
+    "return code",
+    "returning",
+    "terminated with exitcode",
     "returned",
-    "install",
-    "uninstall",
-    "installed",
-    "uninstalled",
-    "msi",
-    "msiexec",
-    "fatal",
 ]
 
 

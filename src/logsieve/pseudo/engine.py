@@ -116,7 +116,6 @@ COMMON_LABELS = FILE_TLDS | STOPWORDS | {
     "lan",
     "localhost",
     "net",
-    "northwind",
     "org",
     "test",
     # Pattern explanations use this acronym. A host whose only leaked label
@@ -336,7 +335,7 @@ class Session:
                 spans.append(Span(match.start(), match.end(), 85, "USER", user.casefold(), match.group(0)))
         for label, host_key in self.short_hosts.items():
             pattern = re.compile(
-                rf"(?<![A-Za-z0-9-]){re.escape(label)}(?![A-Za-z0-9.-])",
+                rf"(?<![A-Za-z0-9-]){re.escape(label)}(?![A-Za-z0-9-])",
                 re.IGNORECASE,
             )
             for match in pattern.finditer(text):
@@ -449,8 +448,8 @@ def _visible_label(label: str, text: str, category: str) -> bool:
     # Label (split from HOST/DOMAIN/EMAIL): category-specific boundaries.
     # Exclude internal separators so substrings in compound tokens don't match.
     if category in {"HOST", "DOMAIN"}:
-        # Host/domain labels: exclude hyphen and dot (internal separators)
-        boundary_chars = r"A-Za-z0-9.-"
+        # Host/domain labels: exclude hyphen (internal separator); dot is a boundary
+        boundary_chars = r"A-Za-z0-9-"
     elif category == "EMAIL":
         # Email local-part labels: exclude . _ % + - (like USER redaction)
         boundary_chars = r"A-Za-z0-9._%+-"
