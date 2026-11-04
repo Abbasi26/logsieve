@@ -13,6 +13,16 @@ LIBRARY_DIR = Path(__file__).resolve().parent / "library"
 SEVERITIES = {"critical", "error", "warning", "info", "debug"}
 CONFIDENCE = {"high", "medium", "low"}
 
+MSI_CODES = {"1602", "1603", "1605", "1618", "1633", "1638", "1642"}
+MSI_KEYWORDS = [
+    "exit code",
+    "exitcode",
+    "return code",
+    "returning",
+    "terminated with exitcode",
+    "returned",
+]
+
 
 @dataclass
 class Pattern:
@@ -85,6 +95,11 @@ def _code_regexes(code: str) -> list[re.Pattern]:
             compiled.append(re.compile(rf"(?<!\d){value}(?!\d)"))
         return compiled
     if re.fullmatch(r"\d+", raw):
+        if raw in MSI_CODES:
+            kw_group = "|".join(map(re.escape, MSI_KEYWORDS))
+            kw = rf"(?<!\w)(?:{kw_group})(?!\w)"
+            pattern = rf"(?i)(?:{kw}.{{0,40}}(?<!\d){re.escape(raw)}(?!\d)|(?<!\d){re.escape(raw)}(?!\d)(?=.{{0,40}}{kw}))"
+            return [re.compile(pattern)]
         return [re.compile(rf"(?<!\d){re.escape(raw)}(?!\d)")]
     return [re.compile(rf"(?i)\b{re.escape(raw)}\b")]
 
