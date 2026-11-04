@@ -73,6 +73,7 @@ Useful flags:
 - `--hostname NAME` and `--username NAME` (repeatable) for names that never appear in a parsed field
 - `--parser auto|cmtrace|ime|evtx|event-xml|event-csv|journald|plain`
 - `--pattern-dir DIR` for extra YAML
+- `--since TIMESTAMP` and `--until TIMESTAMP` (ISO-8601 UTC, e.g. `2026-10-21T08:00:00Z`) to restrict the timeline to an incident window. `--since` inclusive, `--until` exclusive. Events without a timestamp are excluded when a window is set; a warning reports the count. Naive timestamps are treated as UTC.
 - `logsieve patterns` lists the built-in library (`--json` for scripts)
 
 `--no-redact` leaves the text unchanged and refuses `--llm` and `--show-payload`.

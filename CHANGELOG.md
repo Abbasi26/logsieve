@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+- `diagnose --since/--until`: filter events to an ISO-8601 UTC time window (inclusive lower bound, exclusive upper bound). Events without timestamps are excluded with a warning. Naive timestamps are treated as UTC.
+
 ## 0.2.1 - 2026-11-03
 
 ### Fixed
