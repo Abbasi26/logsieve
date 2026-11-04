@@ -54,7 +54,7 @@ Data flow remains linear: parse → sort → **filter by window** → match → 
 |------|------------|
 | Users pass naive timestamps assuming local time | Help text and README state "naive timestamps are treated as UTC until Spec 5.3". |
 | Large logs with many timestamp-less events produce noisy warnings | Warning reports a count only; does not spam per-event. |
-| `--until` equal to `--since` yields empty window (valid but possibly unintended) | Documented as "exclusive upper bound"; empty window is a valid result (exit 0, empty timeline). |
+| `--until` equal to `--since` yields empty window (valid but possibly unintended) | Treated as an error (exit 2): `--until must be after --since` |
 | Existing tests break due to new parameters | All new parameters have defaults (`None`); existing call sites (demo, tests) work unchanged. |
 
 ## Acceptance Criteria
@@ -106,7 +106,10 @@ diagnose.add_argument(
 from datetime import datetime, timezone
 
 def _parse_utc_iso(value: str) -> datetime:
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise LogsieveError(f"invalid timestamp '{value}': {exc}", code=2) from exc
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     else:
@@ -224,7 +227,7 @@ Add under "## Next" (unreleased) or a new version header when released:
 | Condition | Exit Code | Message |
 |-----------|-----------|---------|
 | `--until` ≤ `--since` | 2 | `--until must be after --since` |
-| Invalid ISO-8601 format | 2 | `argparse`/`fromisoformat` error (standard) |
+| Invalid ISO-8601 format | 2 | `logsieve: invalid timestamp '...': ...` (via `LogsieveError`) |
 
 ### Test Cases (pytest)
 

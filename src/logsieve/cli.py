@@ -130,7 +130,10 @@ def _vault_key(vault: Path | None, vault_key: Path | None, passphrase: str | Non
 
 
 def _parse_utc_iso(value: str) -> datetime:
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise LogsieveError(f"invalid timestamp '{value}': {exc}", code=2) from exc
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     else:

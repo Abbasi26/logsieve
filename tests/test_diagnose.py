@@ -164,3 +164,43 @@ def test_vault_path_user_is_redacted(tmp_path: Path):
     report = (out / "report.md").read_text(encoding="utf-8")
     assert "ada.example" not in report
     assert "LS_USER_" in report
+
+
+def test_invalid_since_exits_two(tmp_path: Path, capsys):
+    log = tmp_path / "notes.log"
+    log.write_text("2026-10-21T08:01:05Z ERROR failed 0x8024402C\n", encoding="utf-8")
+    code = main(["diagnose", str(log), "--since", "yesterday"])
+    assert code == 2
+    captured = capsys.readouterr()
+    assert "invalid timestamp" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_invalid_until_exits_two(tmp_path: Path, capsys):
+    log = tmp_path / "notes.log"
+    log.write_text("2026-10-21T08:01:05Z ERROR failed 0x8024402C\n", encoding="utf-8")
+    code = main(["diagnose", str(log), "--until", "2026-13-01"])
+    assert code == 2
+    captured = capsys.readouterr()
+    assert "invalid timestamp" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_lowercase_z_exits_two(tmp_path: Path, capsys):
+    log = tmp_path / "notes.log"
+    log.write_text("2026-10-21T08:01:05Z ERROR failed 0x8024402C\n", encoding="utf-8")
+    code = main(["diagnose", str(log), "--since", "2026-11-03T08:00:00z"])
+    assert code == 2
+    captured = capsys.readouterr()
+    assert "invalid timestamp" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_until_equals_since_exits_two(tmp_path: Path, capsys):
+    log = tmp_path / "notes.log"
+    log.write_text("2026-10-21T08:01:05Z ERROR failed 0x8024402C\n", encoding="utf-8")
+    code = main(["diagnose", str(log), "--since", "2026-10-21T08:00:00Z", "--until", "2026-10-21T08:00:00Z"])
+    assert code == 2
+    captured = capsys.readouterr()
+    assert "--until must be after --since" in captured.err
+    assert "Traceback" not in captured.err
