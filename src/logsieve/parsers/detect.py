@@ -25,7 +25,7 @@ SKIP_SUFFIXES = {
     ".dll",
     ".pyc",
 }
-SKIP_NAMES = {"logsieve-vault.json", "report.md", "report.html"}
+SKIP_NAMES = {"logsieve-vault.json", "report.md", "report.html", "report.json"}
 
 
 def parse_path(path: Path, parser: str = "auto") -> ParseResult:
