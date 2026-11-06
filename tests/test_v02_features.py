@@ -112,6 +112,36 @@ def test_patterns_json_lists_library(capsys):
     assert {"id", "match", "uncertain", "sources"} <= set(rows[0])
 
 
+def test_patterns_area_filter_plain(capsys):
+    assert main(["patterns", "--area", "intune"]) == 0
+    out = capsys.readouterr().out
+    assert out
+    expected = [pattern.id for pattern in load_builtin() if pattern.area.lower() == "intune"]
+    assert sorted(line.split("\t")[0] for line in out.strip().splitlines()) == sorted(expected)
+
+
+def test_patterns_area_filter_json(capsys):
+    assert main(["patterns", "--area", "intune", "--area", "windows-update", "--json"]) == 0
+    rows = json.loads(capsys.readouterr().out)
+    expected = {
+        pattern.id for pattern in load_builtin() if pattern.area.lower() in {"intune", "windows-update"}
+    }
+    assert {row["id"] for row in rows} == expected
+    assert {"id", "match", "title", "area", "category", "confidence", "uncertain", "sources"} <= set(rows[0])
+
+
+def test_patterns_area_unknown_is_empty(capsys):
+    assert main(["patterns", "--area", "does-not-exist"]) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_patterns_area_case_insensitive(capsys):
+    assert main(["patterns", "--area", "INTUNE", "--json"]) == 0
+    rows = json.loads(capsys.readouterr().out)
+    assert all(row["area"] == "intune" for row in rows)
+    assert rows
+
+
 def test_diagnose_json_to_stdout_is_redacted(capsys):
     assert main(["diagnose", str(DEMO_LOGS), "--format", "json"]) == 0
     raw = capsys.readouterr().out
