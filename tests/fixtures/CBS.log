@@ -1,0 +1,3 @@
+2026-10-21 08:03:20, Info                  CBS    Starting TrustedInstaller initialization.
+2026-10-21 08:03:21, Error                 CBS    Failed to resolve package [HRESULT = 0x800f0831 - CBS_E_STORE_CORRUPTION]
+2026-10-21 08:03:22, Warning               CSI    Fictional warning, this device does not exist.

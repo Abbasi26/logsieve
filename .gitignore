@@ -10,3 +10,4 @@ logsieve-demo-out/
 agent-tools/
 uploads/
 .tmp/
+contrib/cmtraceopen-bridge/target/
