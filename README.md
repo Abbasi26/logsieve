@@ -49,6 +49,41 @@ llm: off
 
 The names in that reveal line are fictional (`northwind.example`, TEST-NET-3, the documentation IPv6 prefix). They are how the demo shows that reveal works.
 
+## Collect client logs first
+
+logsieve reads files; it never moves or changes them. Collect the logs from the device into one folder, then point `logsieve diagnose` at that folder. The report is written to a separate output path.
+
+Typical sources on a ConfigMgr / Intune client:
+
+| Source | Default path |
+| --- | --- |
+| ConfigMgr client trace | `%SystemRoot%\CCM\Logs` |
+| Intune Management Extension | `%ProgramData%\Microsoft\IntuneManagementExtension\Logs` |
+| Windows Update client trace | `%SystemRoot%\CCM\Logs\WUAHandler.log` |
+| Windows event log (exported) | `%SystemRoot%\System32\winevt\Logs\Microsoft-Windows-WindowsUpdate%4Operational.evtx` |
+
+Export the event channels first — the live `.evtx` files can be locked. Read-only copy into a working folder:
+
+```powershell
+$dest = "C:\LogsToReview"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+wevtutil epl "%SystemRoot%\System32\winevt\Logs\Microsoft-Windows-WindowsUpdate%4Operational.evtx" "$dest\WindowsUpdate.evtx"
+Copy-Item "$env:SystemRoot\CCM\Logs\*"        $dest -Force
+Copy-Item "$env:ProgramData\Microsoft\IntuneManagementExtension\Logs\*" $dest -Force
+```
+
+Then diagnose the collected folder:
+
+```bash
+logsieve diagnose C:\LogsToReview --output C:\Temp\logsieve-out --vault C:\Temp\logsieve-vault.json
+```
+
+`C:\LogsToReview` is only read. `C:\Temp\logsieve-out` receives `report.md` (and `report.html`, plus `report.json` with `--format all`), and `C:\Temp\logsieve-vault.json` holds the encrypted identifier mapping. To read the report with real names restored, run:
+
+```bash
+logsieve reveal --vault C:\Temp\logsieve-vault.json --input C:\Temp\logsieve-out\report.md
+```
+
 ## Diagnose a directory
 
 ```bash
