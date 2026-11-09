@@ -239,5 +239,107 @@ def test_event_csv_skips_extra_fields_and_keeps_valid_rows():
         f"{source}:3: skipped CSV row with extra fields"
     ]
 
+
+@pytest.mark.parametrize(
+    "csv_text, expected_events, expected_warnings",
+    [
+        # Zu wenige Spalten (Message fehlt als None): Zeile wird übersprungen,
+        # gültige Nachbarzeilen bleiben erhalten.
+        (
+            "Level,Event ID,Message\n"
+            "Error,31,before\n"
+            "Error,32\n"
+            "Warning,33,after\n",
+            [
+                ("31", "before", "error"),
+                ("33", "after", "warning"),
+            ],
+            ["events.csv:3: skipped CSV row with missing required field(s): message"],
+        ),
+        # Mehrere fehlende Felder, auch bei anderer Spaltenreihenfolge:
+# hier fehlt die Event-ID am Ende (zu wenige Spalten -> None).
+        (
+            "Message,Event ID,Level\n"
+            "before,31,Error\n"
+            "32\n"
+            "after,33,Info\n",
+            [
+                ("31", "before", "error"),
+                ("33", "after", "info"),
+            ],
+["events.csv:3: skipped CSV row with missing required field(s): event_id"],
+        ),
+        # Fehlende Event-ID und Nachricht in einer Zeile.
+        (
+            "Level,Event ID,Message\n"
+            "Error,31,before\n"
+            "Error\n"
+            "Warning,33,after\n",
+            [
+                ("31", "before", "error"),
+                ("33", "after", "warning"),
+            ],
+            [
+                "events.csv:3: skipped CSV row with missing required field(s): "
+                "message, event_id"
+            ],
+        ),
+    ],
+)
+def test_event_csv_missing_fields_skipped_with_warning(
+    csv_text, expected_events, expected_warnings
+):
+    from logsieve.parsers.event_csv import parse_event_csv
+
+    source = Path("events.csv")
+    parsed = parse_event_csv(csv_text, source)
+
+    assert [
+        (event.event_id, event.message, event.severity)
+        for event in parsed.events
+    ] == expected_events
+    assert parsed.warnings == expected_warnings
+
+
+def test_event_csv_explicit_empty_fields_still_valid():
+    from logsieve.parsers.event_csv import parse_event_csv
+
+    source = Path("events.csv")
+    parsed = parse_event_csv(
+        "Level,Event ID,Message,Computer,User\n"
+        "Error,31,before,laptop-07,\n"
+        ",,,\n"
+        "Warning,33,after,,ada.example\n",
+        source,
+    )
+
+    assert len(parsed.events) == 2
+    assert parsed.events[0].event_id == "31"
+    assert parsed.events[0].message == "before"
+    assert parsed.events[0].severity == "error"
+    assert parsed.events[0].host == "laptop-07"
+    assert parsed.events[0].user == ""
+    assert parsed.events[1].event_id == "33"
+    assert parsed.events[1].message == "after"
+    assert parsed.events[1].severity == "warning"
+    assert parsed.events[1].user == "ada.example"
+    assert parsed.warnings == []
+
+
+def test_event_csv_missing_fields_via_parse_path(tmp_path: Path):
+    path = tmp_path / "events.csv"
+    path.write_text(
+        "Level,Event ID,Message\n"
+        "Error,31,before\n"
+        "Error,32\n"
+        "Warning,33,after\n",
+        encoding="utf-8",
+    )
+    parsed = parse_path(path)
+
+    assert [event.event_id for event in parsed.events] == ["31", "33"]
+    assert [event.message for event in parsed.events] == ["before", "after"]
+    assert any("skipped CSV row" in warning for warning in parsed.warnings)
+
 # Skipped: broader CSV policy changes; tests could not run without writable temp storage.
 # Risk: malformed records are omitted with a warning; automatic fallback remains unchanged.
