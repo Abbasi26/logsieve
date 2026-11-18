@@ -2,6 +2,7 @@
 
 ## Next
 
+- Dependencies: runtime, dev and build requirements in `pyproject.toml` are pinned to exact versions (`==`). CI installs from the hash-pinned `requirements-ci.txt` (`pip install --require-hashes`), then the project itself with `--no-deps`. Prompted by the malicious `agent-framework` 1.26.1/1.26.2 releases on PyPI ([MAL-2026-20101](https://osv.dev/vulnerability/MAL-2026-20101)); none of these projects depend on it.
 - `diagnose --since/--until`: filter events to an ISO-8601 UTC time window (inclusive lower bound, exclusive upper bound). Events without timestamps are excluded with a warning. Naive timestamps are treated as UTC.
 
 ## 0.2.1 - 2026-11-03
