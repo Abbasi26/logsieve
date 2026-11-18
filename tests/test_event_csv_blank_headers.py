@@ -41,7 +41,3 @@ def test_event_csv_blank_records_have_no_header(text: str):
 
     assert parsed.events == []
     assert parsed.warnings == [f"{source}: CSV has no header"]
-
-
-# Skipped: broader CSV changes and the full pytest run; reference assertions passed in memory.
-# Risk: blank-record prefixes now produce structured CSV events instead of plain-text fallback.
