@@ -238,6 +238,3 @@ def test_event_csv_skips_extra_fields_and_keeps_valid_rows():
     assert parsed.warnings == [
         f"{source}:3: skipped CSV row with extra fields"
     ]
-
-# Skipped: broader CSV policy changes; tests could not run without writable temp storage.
-# Risk: malformed records are omitted with a warning; automatic fallback remains unchanged.
