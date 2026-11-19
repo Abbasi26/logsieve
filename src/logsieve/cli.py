@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from logsieve import __version__
@@ -41,7 +42,8 @@ def _parser() -> argparse.ArgumentParser:
     diagnose.add_argument(
         "--parser",
         default="auto",
-        choices=("auto", "cmtrace", "ime", "evtx", "event-xml", "event-csv", "journald", "plain"),
+        choices=("auto", "cmtrace", "ime", "evtx", "event-xml", "event-csv", "journald", "plain", "cmtraceopen"),
+        help="cmtraceopen = optional CMTrace Open engine via contrib/cmtraceopen-bridge (off by default)",
     )
     diagnose.add_argument("--keep-guids", action="store_true", help="leave GUIDs visible")
     diagnose.add_argument("--keep-ips", action="store_true", help="leave IP addresses visible")
@@ -54,6 +56,16 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         default=200,
         help="maximum error events in the timeline (default 200, 0 = no limit)",
+    )
+    diagnose.add_argument(
+        "--since",
+        type=str,
+        help="Include events at or after this ISO-8601 UTC timestamp (inclusive). Naive timestamps are treated as UTC.",
+    )
+    diagnose.add_argument(
+        "--until",
+        type=str,
+        help="Exclude events at or after this ISO-8601 UTC timestamp (exclusive). Naive timestamps are treated as UTC.",
     )
     diagnose.add_argument(
         "--llm",
@@ -92,6 +104,13 @@ def _parser() -> argparse.ArgumentParser:
         help="check YAML files or directories (default: the built-in library); exit 1 on a problem",
     )
     patterns.add_argument("--json", action="store_true", help="list as JSON")
+    patterns.add_argument(
+        "--area",
+        action="append",
+        default=[],
+        metavar="AREA",
+        help="filter by pattern area, e.g. intune or windows-update (repeatable, case-insensitive)",
+    )
     patterns.set_defaults(func=_patterns)
 
     explain = commands.add_parser("explain", help="look up a code, constant, pattern id, or log line offline")
@@ -124,7 +143,23 @@ def _vault_key(vault: Path | None, vault_key: Path | None, passphrase: str | Non
     return Path(str(vault) + ".key")
 
 
+def _parse_utc_iso(value: str) -> datetime:
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise LogsieveError(f"invalid timestamp '{value}': {exc}", code=2) from exc
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt
+
+
 def _diagnose(args: argparse.Namespace) -> int:
+    since = _parse_utc_iso(args.since) if args.since else None
+    until = _parse_utc_iso(args.until) if args.until else None
+    if since and until and until <= since:
+        raise LogsieveError("--until must be after --since", code=2)
     passphrase = passphrase_from_env()
     options = RedactOptions(
         enabled=not args.no_redact,
@@ -149,6 +184,8 @@ def _diagnose(args: argparse.Namespace) -> int:
         llm_timeout=args.llm_timeout,
         llm_api_key=os_api_key(),
         show_payload=args.show_payload,
+        since=since,
+        until=until,
         timeline_limit=args.timeline_limit,
     )
     if outcome.report_leaks:
@@ -225,6 +262,9 @@ def _patterns(args: argparse.Namespace) -> int:
         patterns = load_patterns(LIBRARY_DIR, args.pattern_dir)
     else:
         patterns = load_builtin()
+    areas = {area.lower() for area in args.area}
+    if areas:
+        patterns = [pattern for pattern in patterns if pattern.area.lower() in areas]
     if args.json:
         rows = [
             {
