@@ -29,6 +29,21 @@ second line]LOG]!><time="08:00:00.000+000" date="10-21-2026" component="AppEnfor
     assert parse_cm_timestamp("08:00:00.000-300", "10-21-2026").astimezone(timezone.utc).hour == 13
 
 
+def test_cmtrace_invalid_offset_keeps_records():
+    text = (
+        '<![LOG[bad timestamp]LOG]!><time="08:00:00.000+9999" '
+        'date="10-21-2026" type="3">\n'
+        '<![LOG[next record]LOG]!><time="08:01:00.000+000" '
+        'date="10-21-2026" type="1">\n'
+    )
+
+    parsed = parse_cmtrace(text, Path("client.log"))
+
+    assert len(parsed.events) == 2
+    assert parsed.events[0].timestamp is None
+    assert parsed.events[1].timestamp == datetime(2026, 10, 21, 8, 1, tzinfo=timezone.utc)
+
+
 def test_ime_filename_and_utf16(tmp_path: Path):
     record = (
         '<![LOG[Win32 app failed 0x87D1041C]LOG]!>'
