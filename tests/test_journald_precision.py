@@ -40,6 +40,3 @@ def test_journald_exact_microseconds_and_fallback(field, raw, expected_iso):
     assert len(parsed.events) == 1
     assert parsed.events[0].timestamp == expected
     assert parsed.warnings == []
-
-# Skipped: repository edits and pytest execution; reproduced float precision loss with Python.
-# Risk: downstream timeline sorting still uses float seconds; its precision is outside this change.
