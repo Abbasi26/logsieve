@@ -42,7 +42,8 @@ def _parser() -> argparse.ArgumentParser:
     diagnose.add_argument(
         "--parser",
         default="auto",
-        choices=("auto", "cmtrace", "ime", "evtx", "event-xml", "event-csv", "journald", "plain"),
+        choices=("auto", "cmtrace", "ime", "evtx", "event-xml", "event-csv", "journald", "plain", "cmtraceopen"),
+        help="cmtraceopen = optional CMTrace Open engine via contrib/cmtraceopen-bridge (off by default)",
     )
     diagnose.add_argument("--keep-guids", action="store_true", help="leave GUIDs visible")
     diagnose.add_argument("--keep-ips", action="store_true", help="leave IP addresses visible")

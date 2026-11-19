@@ -71,7 +71,7 @@ Useful flags:
 
 - `--keep-guids`, `--keep-ips`, `--no-redact`
 - `--hostname NAME` and `--username NAME` (repeatable) for names that never appear in a parsed field
-- `--parser auto|cmtrace|ime|evtx|event-xml|event-csv|journald|plain`
+- `--parser auto|cmtrace|ime|evtx|event-xml|event-csv|journald|plain|cmtraceopen` (`cmtraceopen` is optional, see below)
 - `--pattern-dir DIR` for extra YAML
 - `--since TIMESTAMP` and `--until TIMESTAMP` (ISO-8601 UTC, e.g. `2026-10-21T08:00:00Z`) to restrict the timeline to an incident window. `--since` inclusive, `--until` exclusive. Events without a timestamp are excluded when a window is set; a warning reports the count. Naive timestamps are treated as UTC.
 - `logsieve patterns` lists the built-in library (`--json` for scripts)
@@ -131,6 +131,22 @@ Exit codes: `0` success, `1` bad input or no events, `2` refused to write or sen
 | journald JSON lines | `MESSAGE`, `PRIORITY`, `__REALTIME_TIMESTAMP` or an ISO `timestamp` |
 | Anything else text | one line, one event, ISO timestamps when present |
 
+### Optional: the CMTrace Open parser engine
+
+[CMTrace Open](https://github.com/adamgell/cmtraceopen) by Adam Gell (MIT) publishes its parser as the Rust crate [`cmtraceopen-parser`](https://crates.io/crates/cmtraceopen-parser). It knows more Windows log formats than the built-in parsers, for example CBS, DISM, Panther, MSI, PSADT, WiX Burn, ReportingEvents, IIS W3C, DHCP, and DNS debug logs. Thanks to [@AdamGell](https://x.com/AdamGell) for pointing to it.
+
+`contrib/cmtraceopen-bridge` is a small Rust program that reads one file with that engine and prints the result as JSON. It only reads the file named on its command line and makes no network calls. logsieve uses it only when you ask for it:
+
+```sh
+cd contrib/cmtraceopen-bridge
+cargo build --release --locked          # Rust 1.88 or newer
+export LOGSIEVE_CMTRACEOPEN="$PWD/target/release/logsieve-cmtraceopen"   # or put it on PATH
+cd -
+logsieve diagnose C:/Windows/Logs/CBS/CBS.log --parser cmtraceopen
+```
+
+Without `--parser cmtraceopen` nothing changes: `auto` keeps using the pure-Python parsers, and the package has no Rust dependency. Events from the bridge are labeled `cmtraceopen:<format>` (for example `cmtraceopen:timestamped` for CBS). Times without an offset in the source line are taken as UTC, as the engine reports them. Pseudonymization, patterns, and reports work the same as for every other parser.
+
 Files are only read. A directory is walked and report, vault, and key files are skipped so a second run does not ingest its own output.
 
 ## Permissions
@@ -168,7 +184,7 @@ Not in this version, and not claimed:
 
 [HolmesGPT](https://github.com/HolmesGPT/holmesgpt) is a cloud-native troubleshooting agent with an Ollama provider. It does not target Windows or ConfigMgr client logs, and reversible pseudonymization is not part of the product.
 
-[CMTrace Open](https://github.com/adamgell/cmtraceopen) displays ConfigMgr, IME, and Autopilot logs and can highlight known lines. It is a viewer. logsieve does not replace it. This project adds a single timeline across those logs and the Windows event log, reversible tokens, and an optional explanation of the redacted text.
+[CMTrace Open](https://github.com/adamgell/cmtraceopen) displays ConfigMgr, IME, and Autopilot logs and can highlight known lines. It is a viewer. logsieve does not replace it, and can use its parser engine as an optional backend (`--parser cmtraceopen`, see above). This project adds a single timeline across those logs and the Windows event log, reversible tokens, and an optional explanation of the redacted text.
 
 ## Status
 
