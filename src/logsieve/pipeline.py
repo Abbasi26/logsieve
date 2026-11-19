@@ -169,6 +169,8 @@ def execute(
     llm_timeout: float = 60,
     llm_api_key: str | None = None,
     show_payload: bool = False,
+    since: datetime | None = None,
+    until: datetime | None = None,
 ) -> Outcome:
     options = options or RedactOptions()
     if (llm_url or show_payload) and not options.enabled:
@@ -177,6 +179,30 @@ def execute(
             code=2,
         )
     events, warnings = collect_events(paths, parser)
+
+    # Time window filter
+    if since is not None or until is not None:
+        filtered: list[LogEvent] = []
+        no_timestamp_dropped = 0
+        for event in events:
+            ts = event.timestamp
+            if ts is None:
+                no_timestamp_dropped += 1
+                continue
+            # Normalize to UTC for comparison
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            else:
+                ts = ts.astimezone(timezone.utc)
+            if since is not None and ts < since:
+                continue
+            if until is not None and ts >= until:
+                continue
+            filtered.append(event)
+        if no_timestamp_dropped:
+            warnings.append(f"time window: {no_timestamp_dropped} event(s) without a timestamp were excluded")
+        events = filtered
+
     directories = [LIBRARY_DIR, *(pattern_dirs or [])]
     patterns = load_patterns(*directories)
     hits = match_events(events, patterns)

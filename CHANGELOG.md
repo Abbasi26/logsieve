@@ -1,8 +1,18 @@
 # Changelog
 
-## Unreleased
+## Next
 
+- CI: the setuptools build backend is in the hash-pinned `requirements-ci.txt`, and the project is installed with `--no-build-isolation`, so the build no longer downloads an unhashed setuptools.
+- Dependabot: weekly Python updates (uv ecosystem) for `pyproject.toml`, `requirements-ci.in` and the hash-pinned `requirements-ci.txt`. `requirements-ci.txt` is now compiled from `requirements-ci.in` so Dependabot can recompile it with hashes.
+- Dependencies: runtime, dev and build requirements in `pyproject.toml` are pinned to exact versions (`==`). CI installs from the hash-pinned `requirements-ci.txt` (`pip install --require-hashes`), then the project itself with `--no-deps`. Prompted by the malicious `agent-framework` 1.26.1/1.26.2 releases on PyPI ([MAL-2026-20101](https://osv.dev/vulnerability/MAL-2026-20101)); none of these projects depend on it.
+- `diagnose --since/--until`: filter events to an ISO-8601 UTC time window (inclusive lower bound, exclusive upper bound). Events without timestamps are excluded with a warning. Naive timestamps are treated as UTC.
 - `logsieve explain --open`: prints only the first source URL of the first match so it can be piped to a browser. Exit 1 with a message on stderr when no match or no source is found.
+
+## 0.2.1 - 2026-11-03
+
+### Fixed
+- MSI codes 1602, 1603, 1605, 1618, 1633, 1638, 1642 now match only in exit-status phrasing (within 40 characters of keywords: "exit code", "exitcode", "return code", "returning", "terminated with exitcode", "returned"). They no longer match on ".msi" substrings, bare words like error/failed/install/msi near the number, SIDs, thread IDs, or build numbers.
+- Leak check now uses word boundaries for all identifier classes (long tokens ≥8 chars, IPs, SIDs, emails). Substrings inside version strings (e.g., `10.0.0.1` in `10.0.0.1234`) or compound host tokens (e.g., `laptop-07` in `laptop-07setup`) no longer cause false-positive Exit 2. Real unredacted tokens are still caught. Host labels with trailing dots (e.g., `dc01.`, `laptop-07.`) are detected; `northwind` removed from `COMMON_LABELS`. IPv6 addresses (full and compressed forms) are covered.
 
 ## 0.2.0 - 2026-10-28
 

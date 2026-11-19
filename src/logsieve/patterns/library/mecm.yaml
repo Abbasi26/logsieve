@@ -330,7 +330,7 @@
     - Enable Windows Installer logging and find the Return value 3 entry. Do not stop at 1603.
   sources:
     - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
-  self_test: "Fatal error during installation 1603"
+  self_test: "terminated with exitcode 1603"
 
 - id: msi-not-installed
   title: Windows Installer action is only valid for an installed product
@@ -367,7 +367,7 @@
     - Wait for the other install to finish. Killing msiexec mid-transaction can leave the product half installed.
   sources:
     - https://learn.microsoft.com/en-us/intune/configmgr/tenant-attach/app-install-error-reference
-  self_test: "Another program is being installed 1618"
+  self_test: "exit code 1618"
 
 - id: msi-wrong-processor
   title: Installer package does not support this processor

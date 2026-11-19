@@ -335,7 +335,7 @@ class Session:
                 spans.append(Span(match.start(), match.end(), 85, "USER", user.casefold(), match.group(0)))
         for label, host_key in self.short_hosts.items():
             pattern = re.compile(
-                rf"(?<![A-Za-z0-9-]){re.escape(label)}(?![A-Za-z0-9.-])",
+                rf"(?<![A-Za-z0-9-]){re.escape(label)}(?![A-Za-z0-9-])",
                 re.IGNORECASE,
             )
             for match in pattern.finditer(text):
@@ -400,33 +400,60 @@ def find_leaks(text: str, mapping: Mapping) -> list[str]:
     seen: set[str] = set()
     for entry in mapping.entries:
         original = entry["original"]
-        if _visible(original, text) and original not in seen:
+        category = entry["category"]
+        # Full identifier: category-specific boundaries to match redaction behavior
+        if _visible_full(original, text, category) and original not in seen:
             seen.add(original)
             found.append(original)
-        if entry["category"] in {"HOST", "DOMAIN", "EMAIL"}:
+        if category in {"HOST", "DOMAIN", "EMAIL"}:
             for label in re.split(r"[@.]", original):
                 label = label.strip("{}")
                 if len(label) < 4 or label.casefold() in COMMON_LABELS:
                     continue
-                if _visible(label, text) and label not in seen:
+                # Labels: category-specific boundaries (exclude internal separators)
+                if _visible_label(label, text, category) and label not in seen:
                     seen.add(label)
                     found.append(label)
     return found
 
 
-def _visible(original: str, text: str) -> bool:
-    if len(original) >= 8 or "@" in original or original.upper().startswith("S-1-") or _is_ip(original):
-        return original.casefold() in text.casefold()
-    return re.search(
-        rf"(?<![A-Za-z0-9]){re.escape(original)}(?![A-Za-z0-9])",
-        text,
-        re.IGNORECASE,
-    ) is not None
+def _visible_full(original: str, text: str, category: str) -> bool:
+    # Category-specific boundaries for full identifiers to match redaction behavior.
+    if category == "USER":
+        # Usernames (extra_users): boundaries excluding . _ % + -
+        boundary_chars = r"A-Za-z0-9._%+-"
+    elif category in {"HOST", "DOMAIN"}:
+        # Full hostnames/domains: redacted by FQDN_RE with \b boundaries.
+        # \b treats . as boundary, so alphanumeric-only boundaries work for full FQDN.
+        # But we also need to not match substrings in longer dotted names.
+        # Use alphanumeric boundaries for full FQDN (allows trailing punctuation).
+        boundary_chars = r"A-Za-z0-9"
+    elif category == "EMAIL":
+        # Emails: redacted by EMAIL_RE with \b boundaries
+        boundary_chars = r"A-Za-z0-9"
+    elif category == "SID":
+        # SIDs: redacted by SID_RE with \b boundaries
+        boundary_chars = r"A-Za-z0-9"
+    elif category in {"IPV4", "IPV6"}:
+        # IPs: redacted with custom regex boundaries
+        boundary_chars = r"A-Za-z0-9"
+    else:
+        # SECRET, GUID, etc.: alphanumeric boundaries only
+        boundary_chars = r"A-Za-z0-9"
+    pattern = rf"(?<![{boundary_chars}]){re.escape(original)}(?![{boundary_chars}])"
+    return re.search(pattern, text, re.IGNORECASE) is not None
 
 
-def _is_ip(value: str) -> bool:
-    try:
-        ipaddress.ip_address(value)
-    except ValueError:
-        return False
-    return True
+def _visible_label(label: str, text: str, category: str) -> bool:
+    # Label (split from HOST/DOMAIN/EMAIL): category-specific boundaries.
+    # Exclude internal separators so substrings in compound tokens don't match.
+    if category in {"HOST", "DOMAIN"}:
+        # Host/domain labels: exclude hyphen (internal separator); dot is a boundary
+        boundary_chars = r"A-Za-z0-9-"
+    elif category == "EMAIL":
+        # Email local-part labels: exclude . _ % + - (like USER redaction)
+        boundary_chars = r"A-Za-z0-9._%+-"
+    else:
+        boundary_chars = r"A-Za-z0-9"
+    pattern = rf"(?<![{boundary_chars}]){re.escape(label)}(?![{boundary_chars}])"
+    return re.search(pattern, text, re.IGNORECASE) is not None
