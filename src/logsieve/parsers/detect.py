@@ -5,6 +5,7 @@ from pathlib import Path
 from logsieve.io_util import read_text
 from logsieve.models import ParseResult
 from logsieve.parsers.cmtrace import parse_cmtrace
+from logsieve.parsers.cmtraceopen import parse_cmtraceopen
 from logsieve.parsers.event_csv import looks_like_event_csv, parse_event_csv
 from logsieve.parsers.event_xml import parse_event_xml
 from logsieve.parsers.evtx import parse_evtx
@@ -32,6 +33,8 @@ def parse_path(path: Path, parser: str = "auto") -> ParseResult:
     parser = parser or "auto"
     if parser == "evtx" or (parser == "auto" and path.suffix.lower() == ".evtx"):
         return parse_evtx(path)
+    if parser == "cmtraceopen":
+        return parse_cmtraceopen(path)
     text = read_text(path)
     if parser == "cmtrace":
         return parse_cmtrace(text, path, source_type="cmtrace")

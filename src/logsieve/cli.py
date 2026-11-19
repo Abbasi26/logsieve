@@ -42,7 +42,8 @@ def _parser() -> argparse.ArgumentParser:
     diagnose.add_argument(
         "--parser",
         default="auto",
-        choices=("auto", "cmtrace", "ime", "evtx", "event-xml", "event-csv", "journald", "plain"),
+        choices=("auto", "cmtrace", "ime", "evtx", "event-xml", "event-csv", "journald", "plain", "cmtraceopen"),
+        help="cmtraceopen = optional CMTrace Open engine via contrib/cmtraceopen-bridge (off by default)",
     )
     diagnose.add_argument("--keep-guids", action="store_true", help="leave GUIDs visible")
     diagnose.add_argument("--keep-ips", action="store_true", help="leave IP addresses visible")
@@ -97,6 +98,13 @@ def _parser() -> argparse.ArgumentParser:
         help="check YAML files or directories (default: the built-in library); exit 1 on a problem",
     )
     patterns.add_argument("--json", action="store_true", help="list as JSON")
+    patterns.add_argument(
+        "--area",
+        action="append",
+        default=[],
+        metavar="AREA",
+        help="filter by pattern area, e.g. intune or windows-update (repeatable, case-insensitive)",
+    )
     patterns.set_defaults(func=_patterns)
 
     explain = commands.add_parser("explain", help="look up a code, constant, pattern id, or log line offline")
@@ -247,6 +255,9 @@ def _patterns(args: argparse.Namespace) -> int:
         patterns = load_patterns(LIBRARY_DIR, args.pattern_dir)
     else:
         patterns = load_builtin()
+    areas = {area.lower() for area in args.area}
+    if areas:
+        patterns = [pattern for pattern in patterns if pattern.area.lower() in areas]
     if args.json:
         rows = [
             {
