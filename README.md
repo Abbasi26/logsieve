@@ -86,6 +86,37 @@ Useful flags:
 
 `--no-redact` leaves the text unchanged and refuses `--llm` and `--show-payload`.
 
+### ConfigMgr- und IME-Logs vorher sammeln
+
+Für einen Vorfall zuerst Kopien der vorhandenen Dateien in einen eigenen Ordner
+legen. Die folgenden Dateien decken die üblichen ConfigMgr- und Intune-
+Management-Extension-Pfade ab; nicht vorhandene Dateien einfach auslassen:
+
+- **ConfigMgr:** `%WINDIR%\CCM\Logs\AppEnforce.log`, `CAS.log`,
+  `ContentTransferManager.log`, `DataTransferService.log`,
+  `LocationServices.log`, `PolicyAgent.log`, `ScanAgent.log`,
+  `UpdatesDeployment.log` und `WUAHandler.log`
+- **IME:** `%PROGRAMDATA%\Microsoft\IntuneManagementExtension\Logs\` mit
+  `IntuneManagementExtension.log`, `AgentExecutor.log`, `Sensor.log`,
+  `HealthScripts.log` und `ClientHealth.log`
+
+Beispiel für das Sammeln mit PowerShell (nur vorhandene Dateien werden
+kopiert):
+
+```powershell
+$root = 'C:\Logs\incident-2026-10-21'
+New-Item -ItemType Directory -Force -Path "$root\ConfigMgr", "$root\IME" | Out-Null
+robocopy "$env:WINDIR\CCM\Logs" "$root\ConfigMgr" AppEnforce.log CAS.log ContentTransferManager.log DataTransferService.log LocationServices.log PolicyAgent.log ScanAgent.log UpdatesDeployment.log WUAHandler.log /R:1 /W:1
+robocopy "$env:PROGRAMDATA\Microsoft\IntuneManagementExtension\Logs" "$root\IME" IntuneManagementExtension.log AgentExecutor.log Sensor.log HealthScripts.log ClientHealth.log /R:1 /W:1
+Set-Location $root
+logsieve diagnose .\ConfigMgr .\IME --format all --output .\diagnosis
+```
+
+Der Aufruf liest die Kopien rekursiv und schreibt `report.md`, `report.html`
+und `report.json` in `diagnosis`. Die Standard-Redaktion bleibt aktiv; die
+Rohlogs und ein eventuell erzeugter Vault bleiben lokal. `--no-redact` nicht
+für geteilte Diagnosen verwenden.
+
 ## Look up a code without a log
 
 ```bash
