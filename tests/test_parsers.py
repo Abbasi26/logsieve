@@ -255,6 +255,21 @@ def test_event_csv_skips_extra_fields_and_keeps_valid_rows():
     ]
 
 
+def test_iter_input_files_skips_own_report_json(tmp_path: Path):
+    from logsieve.parsers.detect import iter_input_files
+
+    log = tmp_path / "AppEnforce.log"
+    log.write_text(
+        '<![LOG[first line]LOG]!><time="08:00:00.000+000" date="10-21-2026" component="AppEnforce" type="3">\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "report.json").write_text('{"events": []}', encoding="utf-8")
+
+    selected = iter_input_files([tmp_path])
+
+    assert selected == [log]
+
+
 @pytest.mark.parametrize(
     "csv_text, expected_events, expected_warnings",
     [
