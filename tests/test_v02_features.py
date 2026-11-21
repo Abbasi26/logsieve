@@ -2,7 +2,7 @@ import json
 
 from logsieve.cli import main
 from logsieve.demo import DEMO_LOGS
-from logsieve.explain import code_forms, explain
+from logsieve.explain import code_forms, explain, first_source
 from logsieve.lint import lint_patterns
 from logsieve.patterns import load_builtin
 from logsieve.patterns.matcher import LIBRARY_DIR
@@ -59,6 +59,36 @@ def test_explain_cli_text_json_and_miss(capsys):
     assert data["matches"]
     assert main(["explain", "0xDEADBEEF"]) == 1
     assert "not in the library" in capsys.readouterr().out
+
+
+def test_explain_open_prints_first_source(capsys):
+    assert main(["explain", "--open", "0x8024402C"]) == 0
+    captured = capsys.readouterr()
+    out = captured.out.strip()
+    assert out.startswith("https://")
+    assert "learn.microsoft.com" in out
+    assert captured.err == ""
+
+
+def test_explain_open_no_match_exits_1(capsys):
+    assert main(["explain", "--open", "0xDEADBEEF"]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "no source URL found" in captured.err
+
+
+def test_first_source_returns_first_url():
+    patterns = load_builtin()
+    result = explain("0x8024402C", patterns)
+    url = first_source(result)
+    assert url is not None
+    assert url.startswith("https://")
+
+
+def test_first_source_returns_none_on_no_match():
+    patterns = load_builtin()
+    result = explain("0xDEADBEEF", patterns)
+    assert first_source(result) is None
 
 
 def test_lint_builtin_library_is_clean():
