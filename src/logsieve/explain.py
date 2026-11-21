@@ -181,3 +181,13 @@ def _wrap(text: str, width: int = 88) -> list[str]:
     import textwrap
 
     return textwrap.wrap(" ".join(text.split()), width=width) or [""]
+
+
+def first_source(result: Explanation) -> str | None:
+    """Return the first source URL from the first match, or None if no match has sources."""
+    if not result.matches:
+        return None
+    for pattern, _ in result.matches:
+        if pattern.sources:
+            return pattern.sources[0]
+    return None
