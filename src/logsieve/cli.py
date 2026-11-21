@@ -52,6 +52,12 @@ def _parser() -> argparse.ArgumentParser:
     diagnose.add_argument("--username", action="append", default=[], help="extra account to mask (repeatable)")
     diagnose.add_argument("--pattern-dir", type=Path, help="extra YAML patterns")
     diagnose.add_argument(
+        "--timeline-limit",
+        type=int,
+        default=200,
+        help="maximum error events in the timeline (default 200, 0 = no limit)",
+    )
+    diagnose.add_argument(
         "--since",
         type=str,
         help="Include events at or after this ISO-8601 UTC timestamp (inclusive). Naive timestamps are treated as UTC.",
@@ -181,6 +187,7 @@ def _diagnose(args: argparse.Namespace) -> int:
         show_payload=args.show_payload,
         since=since,
         until=until,
+        timeline_limit=args.timeline_limit,
     )
     if outcome.report_leaks:
         print(
