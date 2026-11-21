@@ -81,6 +81,17 @@ def parse_event_csv(text: str, source: Path) -> ParseResult:
                 f"{source}:{reader.line_num}: skipped CSV row with extra fields"
             )
             continue
+        missing = [
+            key
+            for key in ("message", "event_id")
+            if columns.get(key) is not None and row.get(columns[key]) is None
+        ]
+        if missing:
+            result.warnings.append(
+                f"{source}:{reader.line_num}: skipped CSV row with missing "
+                f"required field(s): {', '.join(missing)}"
+            )
+            continue
         if not any((value or "").strip() for value in row.values()):
             continue
         level = (row.get(columns.get("level", ""), "") or "").strip()
