@@ -1,12 +1,13 @@
 import json
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
 
 from logsieve.cli import main
 from logsieve.demo import DEMO_LOGS, EMAIL, IDENTIFIERS
 from logsieve.parsers.synthetic_evtx import build_evtx
-from datetime import datetime, timezone
 
 
 SECRETS = IDENTIFIERS
@@ -29,6 +30,62 @@ def _write_evtx(directory: Path) -> None:
         ]
     )
     (directory / "WindowsUpdate.evtx").write_bytes(blob)
+
+
+def _write_diagnose_log(path: Path) -> None:
+    path.write_text("2026-10-21T08:01:05Z ERROR failed 0x8024402C\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize("suffix", [".md", ".html", ".json"])
+def test_output_format_is_inferred_from_file_suffix(tmp_path: Path, suffix: str):
+    log = tmp_path / "notes.log"
+    _write_diagnose_log(log)
+    output_dir = tmp_path / "output"
+    target = output_dir / f"diagnosis{suffix}"
+
+    code = main(["diagnose", str(log), "--output", str(target)])
+
+    assert code == 0
+    assert target.is_file()
+    assert {path.name for path in output_dir.iterdir()} == {target.name}
+    content = target.read_text(encoding="utf-8")
+    assert content
+    if suffix == ".json":
+        json.loads(content)
+
+
+def test_all_formats_with_file_output_path(tmp_path: Path):
+    log = tmp_path / "notes.log"
+    _write_diagnose_log(log)
+    output_dir = tmp_path / "output"
+    target = output_dir / "diagnosis.md"
+    expected_names = {"diagnosis.md", "diagnosis.html", "diagnosis.json"}
+
+    code = main(["diagnose", str(log), "--format", "all", "--output", str(target)])
+
+    assert code == 0
+    assert {path.name for path in output_dir.iterdir()} == expected_names
+    for name in expected_names:
+        content = (output_dir / name).read_text(encoding="utf-8")
+        assert content
+    json.loads((output_dir / "diagnosis.json").read_text(encoding="utf-8"))
+
+
+def test_all_formats_with_output_directory(tmp_path: Path):
+    log = tmp_path / "notes.log"
+    _write_diagnose_log(log)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    expected_names = {"report.md", "report.html", "report.json"}
+
+    code = main(["diagnose", str(log), "--format", "all", "--output", str(output_dir)])
+
+    assert code == 0
+    assert {path.name for path in output_dir.iterdir()} == expected_names
+    for name in expected_names:
+        content = (output_dir / name).read_text(encoding="utf-8")
+        assert content
+    json.loads((output_dir / "report.json").read_text(encoding="utf-8"))
 
 
 def test_show_payload_has_no_originals(tmp_path: Path, monkeypatch, capsys):
